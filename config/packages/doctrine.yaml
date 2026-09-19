@@ -3,6 +3,15 @@ doctrine:
         url: '%env(resolve:DATABASE_URL)%'
         # IMPORTANT: server_version is set via the DATABASE_URL env var (see .env file)
         profiling_collect_backtrace: '%kernel.debug%'
+        # Upstream llx_societe.geopoint / llx_socpeople.geopoint are MariaDB
+        # spatial POINT columns, which DBAL has no native type for. A custom
+        # type keeps the real `point` DDL and lets introspection work.
+        types:
+            point: App\DBAL\PointType
+            tinyint: App\DBAL\TinyIntType
+        mapping_types:
+            point: point
+            tinyint: tinyint
     orm:
         validate_xml_mapping: true
         # Keep Dolibarr column names verbatim (llx_ tables are snake_case upstream)
