@@ -127,7 +127,7 @@ final class BankAccountApiTest extends WebTestCase
         self::assertResponseStatusCodeSame(404);
         $body = $this->jsonResponse();
         self::assertIsArray($body);
-        self::assertSame('Account not found', $body['detail'] ?? null);
+        self::assertSame('Account not found', $body['error']['message'] ?? null);
     }
 
     public function testListReturns400OnZeroId(): void
@@ -236,7 +236,7 @@ final class BankAccountApiTest extends WebTestCase
         self::assertResponseStatusCodeSame(404);
         $body = $this->jsonResponse();
         self::assertIsArray($body);
-        self::assertSame("Error creating Company Bank account, Company doesn't exists", $body['detail'] ?? null);
+        self::assertSame("Error creating Company Bank account, Company doesn't exists", $body['error']['message'] ?? null);
     }
 
     public function testUpdateWrongSocidReturns403(): void

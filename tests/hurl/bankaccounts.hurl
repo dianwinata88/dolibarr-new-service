@@ -23,7 +23,7 @@ Accept: application/json
 {"label":"x"}
 HTTP 404
 [Asserts]
-jsonpath "$.detail" == "Error creating Company Bank account, Company doesn't exists"
+jsonpath "$.error.message" == "Error creating Company Bank account, Company doesn't exists"
 
 # create one
 POST {{host}}/api/thirdparties/{{socid}}/bankaccounts
