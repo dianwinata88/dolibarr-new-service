@@ -56,10 +56,12 @@ what exists and note the missing dependency in your structured output.
 - Do not edit shared config outside your assigned files.
 - Secrets live in env vars only: `.env` holds non-secret dev defaults,
   `.env.example` holds placeholders. Never commit real keys.
-- Auth: requests authenticate with the `DOLAPIKEY` header or `api_key`
-  query parameter, checked against the comma-separated `DOLIBARR_API_KEYS`
-  env var (`App\Security\ApiKeyAuthenticator`). Public paths: `/healthz`,
-  `/api/docs*`. Everything else requires `ROLE_API`.
+- Auth: requests authenticate with the `DOLAPIKEY` header, `api_key` query
+  parameter, or `Authorization: Bearer`, checked against the `DOLIBARR_API_KEYS`
+  env var (a JSON map `key → {"login","entity"}`; a bare comma-separated list
+  is also accepted) via `App\Security\ApiKeyAuthenticator`. The key's `entity`
+  scopes the request; read it via `App\Security\EntityContext`. Public paths:
+  `/healthz`, `/api/docs*`. Everything else requires `ROLE_API`.
 
 ## Tests
 

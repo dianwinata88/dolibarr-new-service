@@ -14,11 +14,24 @@ curl -H 'DOLAPIKEY: dolibarr-dev-key' http://localhost/api
 ```
 
 API docs (Swagger UI): http://localhost/api/docs
+Optional DB UI (Adminer): `docker compose --profile tools up` → http://localhost:8080
 
 ## Auth
 
-`DOLAPIKEY` header or `api_key` query param, checked against the
-comma-separated `DOLIBARR_API_KEYS` env var. Dev default: `dolibarr-dev-key`.
+Dolibarr-compatible API keys. Accepted locations, in order: `api_key` /
+`DOLAPIKEY` query params, the `DOLAPIKEY` header (recommended), or
+`Authorization: Bearer <key>` as fallback.
+
+Keys come from the `DOLIBARR_API_KEYS` env var, a JSON map of
+`key → {"login": "...", "entity": <int>}`. The key's `entity` scopes every
+request (upstream `$conf->entity`); a `DOLAPIENTITY` header may assert it
+and is rejected with 401 on mismatch. A bare comma-separated key list is
+also accepted and maps to entity `1`. Dev default key: `dolibarr-dev-key`.
+
+Errors follow the upstream shape `{"error":{"code":NNN,"message":"..."}}`.
+Downstream code reads the scope via `App\Security\EntityContext`.
+
+See docs/RUNNING.md for the full operating guide.
 
 ## Tests & QA
 
