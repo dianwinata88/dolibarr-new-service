@@ -31,9 +31,19 @@ final class HealthControllerTest extends WebTestCase
     public function testApiEntrypointAcceptsDolApiKeyHeader(): void
     {
         $client = self::createClient();
-        $keys = explode(',', (string) ($_SERVER['DOLIBARR_API_KEYS'] ?? 'dolibarr-dev-key'));
-        $client->request('GET', '/api', server: ['HTTP_DOLAPIKEY' => trim($keys[0])]);
+        $client->request('GET', '/api', server: ['HTTP_DOLAPIKEY' => self::firstConfiguredApiKey()]);
 
         self::assertResponseIsSuccessful();
+    }
+
+    private static function firstConfiguredApiKey(): string
+    {
+        $raw = (string) ($_SERVER['DOLIBARR_API_KEYS'] ?? 'dolibarr-dev-key');
+        $decoded = json_decode($raw, true);
+        if (\is_array($decoded) && [] !== $decoded) {
+            return (string) array_key_first($decoded);
+        }
+
+        return trim(explode(',', $raw)[0]);
     }
 }

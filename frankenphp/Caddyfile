@@ -11,7 +11,10 @@
 
 {$CADDY_EXTRA_CONFIG}
 
-{$SERVER_NAME:localhost} {
+# Defaults to a plain-HTTP catch-all on :80: TLS is terminated by the
+# reverse proxy in front of this service (auto_https is off above).
+# Set SERVER_NAME to a hostname to restrict the served host.
+{$SERVER_NAME::80} {
 	log
 
 	root /app/public
