@@ -1,0 +1,13 @@
+.git/
+.github/
+vendor/
+var/
+tests/
+docs/
+public/bundles/
+.dockerignore
+Dockerfile
+docker-compose*.yml
+compose*.yml
+.env.local
+.env.*.local
