@@ -38,6 +38,37 @@ class User
     #[ORM\Column(type: Types::INTEGER, name: 'entity', nullable: false, options: ['default' => 1])]
     private int $entity = 1;
 
+    #[ORM\Column(type: Types::STRING, name: 'email', length: 255, nullable: true)]
+    private ?string $email = null;
+
+    #[ORM\Column(type: Types::STRING, name: 'job', length: 128, nullable: true)]
+    private ?string $job = null;
+
+    #[ORM\Column(type: Types::STRING, name: 'office_phone', length: 30, nullable: true)]
+    private ?string $officePhone = null;
+
+    #[ORM\Column(type: Types::STRING, name: 'office_fax', length: 30, nullable: true)]
+    private ?string $officeFax = null;
+
+    #[ORM\Column(type: Types::STRING, name: 'user_mobile', length: 30, nullable: true)]
+    private ?string $userMobile = null;
+
+    #[ORM\Column(type: Types::STRING, name: 'personal_mobile', length: 30, nullable: true)]
+    private ?string $personalMobile = null;
+
+    #[ORM\Column(type: Types::STRING, name: 'gender', length: 10, nullable: true)]
+    private ?string $gender = null;
+
+    #[ORM\Column(type: Types::STRING, name: 'photo', length: 255, nullable: true)]
+    private ?string $photo = null;
+
+    #[ORM\Column(type: Types::SMALLINT, name: 'statut', nullable: true, options: ['default' => 1])]
+    private ?int $statut = 1;
+
+    /** Soft reference to the contact this user is linked to (upstream llx_user.fk_socpeople). */
+    #[ORM\Column(type: Types::INTEGER, name: 'fk_socpeople', nullable: true)]
+    private ?int $fkSocpeople = null;
+
     public function getRowid(): ?int
     {
         return $this->rowid;
@@ -94,6 +125,66 @@ class User
     public function setEntity(int $entity): static
     {
         $this->entity = $entity;
+
+        return $this;
+    }
+
+    public function getEmail(): ?string
+    {
+        return $this->email;
+    }
+
+    public function setEmail(?string $email): static
+    {
+        $this->email = $email;
+
+        return $this;
+    }
+
+    public function getJob(): ?string
+    {
+        return $this->job;
+    }
+
+    public function setJob(?string $job): static
+    {
+        $this->job = $job;
+
+        return $this;
+    }
+
+    public function getOfficePhone(): ?string
+    {
+        return $this->officePhone;
+    }
+
+    public function setOfficePhone(?string $officePhone): static
+    {
+        $this->officePhone = $officePhone;
+
+        return $this;
+    }
+
+    public function getStatut(): ?int
+    {
+        return $this->statut;
+    }
+
+    public function setStatut(?int $statut): static
+    {
+        $this->statut = $statut;
+
+        return $this;
+    }
+
+    public function getFkSocpeople(): ?int
+    {
+        return $this->fkSocpeople;
+    }
+
+    public function setFkSocpeople(?int $fkSocpeople): static
+    {
+        $this->fkSocpeople = $fkSocpeople;
 
         return $this;
     }

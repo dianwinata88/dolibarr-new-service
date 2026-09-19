@@ -6,6 +6,7 @@ namespace App\Tests\Pricing;
 
 use App\Entity\Societe;
 use App\Entity\SocieteRemiseExcept;
+use App\Tests\Support\TestApiKeys;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -22,9 +23,7 @@ final class PricingApiTest extends WebTestCase
 
     private function apiKey(): string
     {
-        $keys = explode(',', (string) ($_SERVER['DOLIBARR_API_KEYS'] ?? 'dolibarr-dev-key'));
-
-        return trim($keys[0]);
+        return TestApiKeys::first();
     }
 
     /**
@@ -60,6 +59,24 @@ final class PricingApiTest extends WebTestCase
         } catch (\Throwable $e) {
             self::markTestSkipped('Test database not available: ' . $e->getMessage());
         }
+    }
+
+    /** Enable upstream's product module + multiprices switches for a test. */
+    private function enableMultiprices(): void
+    {
+        $_SERVER['DOLIBARR_MODULES'] = 'product';
+        $_SERVER['PRODUIT_MULTIPRICES'] = '1';
+        $_SERVER['PRODUIT_MULTIPRICES_LIMIT'] = '5';
+    }
+
+    protected function tearDown(): void
+    {
+        unset(
+            $_SERVER['DOLIBARR_MODULES'],
+            $_SERVER['PRODUIT_MULTIPRICES'],
+            $_SERVER['PRODUIT_MULTIPRICES_LIMIT'],
+        );
+        parent::tearDown();
     }
 
     private function createThirdparty(string $name = 'TestCo'): int
@@ -114,12 +131,16 @@ final class PricingApiTest extends WebTestCase
     public function testSetPriceLevelUpdatesSocieteAndLogsHistory(): void
     {
         $socid = $this->createThirdparty();
+        $this->enableMultiprices();
 
         $this->client->request('PUT', "/api/thirdparties/{$socid}/setpricelevel/3", server: $this->auth());
 
         self::assertResponseIsSuccessful();
         $body = $this->responseBody();
-        self::assertSame(3, $body['price_level']);
+        // upstream returns the company object fetched BEFORE setPriceLevel —
+        // the stale price_level is faithfully emitted (Societe::setPriceLevel
+        // does not update $this->price_level in memory).
+        self::assertSame(1, $body['price_level']);
 
         $em = $this->em();
         $em->clear();
@@ -137,6 +158,7 @@ final class PricingApiTest extends WebTestCase
     public function testSetPriceLevelOutOfRange(): void
     {
         $socid = $this->createThirdparty();
+        $this->enableMultiprices();
 
         $this->client->request('PUT', "/api/thirdparties/{$socid}/setpricelevel/6", server: $this->auth());
 
@@ -149,6 +171,7 @@ final class PricingApiTest extends WebTestCase
 
     public function testSetPriceLevelUnknownThirdparty(): void
     {
+        $this->enableMultiprices();
         // Upstream maps a missing thirdparty here to a 500 "Error fetching".
         $this->client->request('PUT', '/api/thirdparties/99999/setpricelevel/2', server: $this->auth());
 

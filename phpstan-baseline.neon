@@ -1,0 +1,205 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Property App\\Entity\\User\:\:\$gender \(string\|null\) is never assigned string so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/User.php
+
+		-
+			message: '#^Property App\\Entity\\User\:\:\$gender is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Entity/User.php
+
+		-
+			message: '#^Property App\\Entity\\User\:\:\$officeFax \(string\|null\) is never assigned string so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/User.php
+
+		-
+			message: '#^Property App\\Entity\\User\:\:\$officeFax is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Entity/User.php
+
+		-
+			message: '#^Property App\\Entity\\User\:\:\$personalMobile \(string\|null\) is never assigned string so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/User.php
+
+		-
+			message: '#^Property App\\Entity\\User\:\:\$personalMobile is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Entity/User.php
+
+		-
+			message: '#^Property App\\Entity\\User\:\:\$photo \(string\|null\) is never assigned string so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/User.php
+
+		-
+			message: '#^Property App\\Entity\\User\:\:\$photo is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Entity/User.php
+
+		-
+			message: '#^Property App\\Entity\\User\:\:\$userMobile \(string\|null\) is never assigned string so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/User.php
+
+		-
+			message: '#^Property App\\Entity\\User\:\:\$userMobile is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Entity/User.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$account$#'
+			identifier: parameter.notFound
+			count: 1
+			path: src/ThirdParty/BankAccountService.php
+
+		-
+			message: '#^Method App\\ThirdParty\\CategoryService\:\:containing\(\) never returns int so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: src/ThirdParty/CategoryService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between mixed and null will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: src/ThirdParty/DolibarrConfig.php
+
+		-
+			message: '#^Loose comparison using \!\= between '','' and '','' will always evaluate to false\.$#'
+			identifier: notEqual.alwaysFalse
+			count: 1
+			path: src/ThirdParty/DolibarrUtils.php
+
+		-
+			message: '#^Loose comparison using \!\= between ''\.'' and ''\.'' will always evaluate to false\.$#'
+			identifier: notEqual.alwaysFalse
+			count: 1
+			path: src/ThirdParty/DolibarrUtils.php
+
+		-
+			message: '#^Loose comparison using \!\= between \*NEVER\* and '','' will always evaluate to true\.$#'
+			identifier: notEqual.alwaysTrue
+			count: 1
+			path: src/ThirdParty/DolibarrUtils.php
+
+		-
+			message: '#^Loose comparison using \!\= between \*NEVER\* and ''\.'' will always evaluate to true\.$#'
+			identifier: notEqual.alwaysTrue
+			count: 1
+			path: src/ThirdParty/DolibarrUtils.php
+
+		-
+			message: '#^Loose comparison using \=\= between '','' and '','' will always evaluate to true\.$#'
+			identifier: equal.alwaysTrue
+			count: 1
+			path: src/ThirdParty/DolibarrUtils.php
+
+		-
+			message: '#^Loose comparison using \=\= between ''\.'' and '','' will always evaluate to false\.$#'
+			identifier: equal.alwaysFalse
+			count: 1
+			path: src/ThirdParty/DolibarrUtils.php
+
+		-
+			message: '#^Loose comparison using \=\= between non\-empty\-string and '''' will always evaluate to false\.$#'
+			identifier: equal.alwaysFalse
+			count: 1
+			path: src/ThirdParty/DolibarrUtils.php
+
+		-
+			message: '#^Offset 2 on array\{0\: non\-empty\-string, 1\: string, 2\: non\-falsy\-string, 3\?\: non\-falsy\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/ThirdParty/DolibarrUtils.php
+
+		-
+			message: '#^Result of && is always false\.$#'
+			identifier: booleanAnd.alwaysFalse
+			count: 2
+			path: src/ThirdParty/DolibarrUtils.php
+
+		-
+			message: '#^Parameter \#3 \$maskraz of method App\\ThirdParty\\NumberingService\:\:buildMaskLike\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/ThirdParty/NumberingService.php
+
+		-
+			message: '#^Parameter \#5 \$month of method App\\ThirdParty\\NumberingService\:\:buildSqlWhereForRazFiscal\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/ThirdParty/NumberingService.php
+
+		-
+			message: '#^Parameter \#7 \$mode of method App\\ThirdParty\\NumberingService\:\:getNextValue\(\) expects string, App\\ThirdParty\\Company given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/ThirdParty/NumberingService.php
+
+		-
+			message: '#^Property App\\ThirdParty\\NumberingService\:\:\$utils is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/ThirdParty/NumberingService.php
+
+		-
+			message: '#^Right side of \|\| is always true\.$#'
+			identifier: booleanOr.rightAlwaysTrue
+			count: 1
+			path: src/ThirdParty/NumberingService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between non\-empty\-string&uppercase\-string and '''' will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: src/ThirdParty/NumberingService.php
+
+		-
+			message: '#^Variable \$maskpos in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.variable
+			count: 1
+			path: src/ThirdParty/NumberingService.php
+
+		-
+			message: '#^Constant App\\ThirdParty\\ThirdpartySerializer\:\:TIMESTAMP_KEYS is unused\.$#'
+			identifier: classConstant.unused
+			count: 1
+			path: src/ThirdParty/ThirdpartySerializer.php
+
+		-
+			message: '#^Comparison operation "\>" between 1\|2\|3\|4\|5\|6\|7\|8\|9\|10\|11 and 0 is always true\.$#'
+			identifier: greater.alwaysTrue
+			count: 1
+			path: src/ThirdParty/ThirdpartyService.php
+
+		-
+			message: '#^Constant App\\ThirdParty\\ThirdpartyService\:\:ERROR_MAP_CLIENT is unused\.$#'
+			identifier: classConstant.unused
+			count: 1
+			path: src/ThirdParty/ThirdpartyService.php
+
+		-
+			message: '#^Constant App\\ThirdParty\\ThirdpartyService\:\:ERROR_MAP_SUPPLIER is unused\.$#'
+			identifier: classConstant.unused
+			count: 1
+			path: src/ThirdParty/ThirdpartyService.php
+
+		-
+			message: '#^Property App\\ThirdParty\\ThirdpartyService\:\:\$profids is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/ThirdParty/ThirdpartyService.php

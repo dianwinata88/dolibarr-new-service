@@ -49,14 +49,18 @@ final class ThirdpartyService
     // ==================================================================
 
     /**
-     * @return int <0 error, 0 not found, >0 id
+     * Returns <0 error, 0 not found, >0 id.
+     *
+     * @return int
      */
     public function fetch(Company $s, int $rowid = 0, string $ref = '', string $ref_ext = '', string $barcode = '', string $idprof1 = '', string $idprof2 = '', string $idprof3 = '', string $idprof4 = '', string $idprof5 = '', string $idprof6 = '', string $email = '', string $ref_alias = ''): int
     {
-        if (empty($rowid) && empty($ref) && empty($ref_ext) && empty($barcode)
+        if (
+            empty($rowid) && empty($ref) && empty($ref_ext) && empty($barcode)
             && empty($idprof1) && empty($idprof2) && empty($idprof3)
             && empty($idprof4) && empty($idprof5) && empty($idprof6)
-            && empty($email) && empty($ref_alias)) {
+            && empty($email) && empty($ref_alias)
+        ) {
             return -1;
         }
 
@@ -102,19 +106,21 @@ final class ThirdpartyService
         $sql .= ' LEFT JOIN llx_c_regions as r ON d.fk_region = r.code_region';
         $sql .= ' LEFT JOIN llx_c_typent as te ON s.fk_typent = te.id';
         $sql .= ' LEFT JOIN llx_c_incoterms as i ON s.fk_incoterms = i.rowid';
-        $sql .= ' WHERE s.entity IN ('.$this->config->getEntity('societe').')';
+        $sql .= ' WHERE s.entity IN (' . $this->config->getEntity('societe') . ')';
 
         if ($rowid) {
-            $sql .= ' AND s.rowid = '.((int) $rowid);
+            $sql .= ' AND s.rowid = ' . ((int) $rowid);
         }
-        foreach ([
+        foreach (
+            [
             'ref' => 'nom', 'ref_alias' => 'name_alias', 'ref_ext' => 'ref_ext',
             'barcode' => 'barcode', 'idprof1' => 'siren', 'idprof2' => 'siret',
             'idprof3' => 'ape', 'idprof4' => 'idprof4', 'idprof5' => 'idprof5',
             'idprof6' => 'idprof6', 'email' => 'email',
-        ] as $param => $col) {
+            ] as $param => $col
+        ) {
             if (!empty($$param)) {
-                $sql .= " AND s.$col = ".$this->db->quote((string) $$param);
+                $sql .= " AND s.$col = " . $this->db->quote((string) $$param);
             }
         }
 
@@ -286,7 +292,7 @@ final class ThirdpartyService
      */
     public function fetchExtrafields(string $tableElement, int $fkObject): array
     {
-        $table = 'llx_'.$tableElement.'_extrafields';
+        $table = 'llx_' . $tableElement . '_extrafields';
         if (!$this->tableExists($table)) {
             return [];
         }
@@ -299,7 +305,7 @@ final class ThirdpartyService
         // upstream stores them as array_options['options_xxx']
         $options = [];
         foreach ($row as $key => $value) {
-            $options['options_'.$key] = $value;
+            $options['options_' . $key] = $value;
         }
 
         return $options;
@@ -385,75 +391,87 @@ final class ThirdpartyService
 
                 $keymin = strtolower($key);
                 if ($i <= 6) {
-                    $keymin = 'idprof'.$i;
+                    $keymin = 'idprof' . $i;
                 }
 
                 $vallabel = (string) ($s->$prop ?? '');
 
                 if ($i > 0 && $i <= 6) {
                     // profid
-                    if (empty($vallabel) && $this->isACompany($s) && $mysocCountryId > 0
+                    if (
+                        empty($vallabel) && $this->isACompany($s) && $mysocCountryId > 0
                         && (int) ($s->country_id ?? 0) === $mysocCountryId
-                        && $this->config->getString($mandatoryConst)) {
-                        $this->error = 'Error '.$key.' is mandatory but empty';
+                        && $this->config->getString($mandatoryConst)
+                    ) {
+                        $this->error = 'Error ' . $key . ' is mandatory but empty';
                         $this->errors[] = $this->error;
                         $result = -4;
                     }
 
                     // unique check
-                    if ($vallabel !== '' && $this->idProfVerifiable($i)
+                    if (
+                        $vallabel !== '' && $this->idProfVerifiable($i)
                         && $this->config->getString($uniqueConst)
-                        && $this->idProfExists($keymin, $vallabel, $s->id ?? 0)) {
-                        $this->error = 'Error '.$key.' already exists';
+                        && $this->idProfExists($keymin, $vallabel, $s->id ?? 0)
+                    ) {
+                        $this->error = 'Error ' . $key . ' already exists';
                         $this->errors[] = $this->error;
                         $result = -4;
                     }
                 } elseif ($key === 'EMAIL') {
                     if (empty($vallabel) && $this->config->getString($mandatoryConst)) {
-                        $this->error = 'Error '.$key.' is mandatory but empty';
+                        $this->error = 'Error ' . $key . ' is mandatory but empty';
                         $this->errors[] = $this->error;
                         $result = -4;
                     } elseif ($vallabel !== '' && !$this->utils->isValidEmail($vallabel)) {
-                        $this->error = 'Error '.$key.' is not valid';
+                        $this->error = 'Error ' . $key . ' is not valid';
                         $this->errors[] = $this->error;
                         $result = -4;
-                    } elseif ($vallabel !== '' && $this->config->getString($uniqueConst)
-                        && $this->idProfExists('email', $vallabel, $s->id ?? 0)) {
-                        $this->error = 'Error '.$key.' already exists';
+                    } elseif (
+                        $vallabel !== '' && $this->config->getString($uniqueConst)
+                        && $this->idProfExists('email', $vallabel, $s->id ?? 0)
+                    ) {
+                        $this->error = 'Error ' . $key . ' already exists';
                         $this->errors[] = $this->error;
                         $result = -4;
                     }
                 } elseif ($key === 'TVA_INTRA') {
                     if (empty($vallabel) && $s->tva_assuj && $this->config->getString($mandatoryConst)) {
-                        $this->error = 'Error '.$key.' is mandatory but empty';
+                        $this->error = 'Error ' . $key . ' is mandatory but empty';
                         $this->errors[] = $this->error;
                         $result = -4;
-                    } elseif ($vallabel !== '' && $this->config->getString($uniqueConst)
-                        && $this->idProfExists('tva_intra', $vallabel, $s->id ?? 0)) {
-                        $this->error = 'Error '.$key.' already exists';
+                    } elseif (
+                        $vallabel !== '' && $this->config->getString($uniqueConst)
+                        && $this->idProfExists('tva_intra', $vallabel, $s->id ?? 0)
+                    ) {
+                        $this->error = 'Error ' . $key . ' already exists';
                         $this->errors[] = $this->error;
                         $result = -4;
                     }
                 } elseif ($key === 'EUID') {
                     if (empty($vallabel) && $this->config->getString($mandatoryConst)) {
-                        $this->error = 'Error '.$key.' is mandatory but empty';
+                        $this->error = 'Error ' . $key . ' is mandatory but empty';
                         $this->errors[] = $this->error;
                         $result = -4;
-                    } elseif ($vallabel !== '' && $this->config->getString($uniqueConst)
-                        && $this->idProfExists('euid', $vallabel, $s->id ?? 0)) {
-                        $this->error = 'Error '.$key.' already exists';
+                    } elseif (
+                        $vallabel !== '' && $this->config->getString($uniqueConst)
+                        && $this->idProfExists('euid', $vallabel, $s->id ?? 0)
+                    ) {
+                        $this->error = 'Error ' . $key . ' already exists';
                         $this->errors[] = $this->error;
                         $result = -4;
                     }
                 } elseif ($key === 'ACCOUNTANCY_CODE_CUSTOMER') {
                     if ($s->client) {
                         if (empty($vallabel) && $this->config->getString($mandatoryConst)) {
-                            $this->error = 'Error '.$key.' is mandatory but empty';
+                            $this->error = 'Error ' . $key . ' is mandatory but empty';
                             $this->errors[] = $this->error;
                             $result = -4;
-                        } elseif ($vallabel !== '' && $this->config->getString($uniqueConst)
-                            && $this->idProfExists('code_compta', $vallabel, $s->id ?? 0)) {
-                            $this->error = 'Error '.$key.' already exists';
+                        } elseif (
+                            $vallabel !== '' && $this->config->getString($uniqueConst)
+                            && $this->idProfExists('code_compta', $vallabel, $s->id ?? 0)
+                        ) {
+                            $this->error = 'Error ' . $key . ' already exists';
                             $this->errors[] = $this->error;
                             $result = -4;
                         }
@@ -461,12 +479,14 @@ final class ThirdpartyService
                 } elseif ($key === 'ACCOUNTANCY_CODE_SUPPLIER') {
                     if ($s->fournisseur) {
                         if (empty($vallabel) && $this->config->getString($mandatoryConst)) {
-                            $this->error = 'Error '.$key.' is mandatory but empty';
+                            $this->error = 'Error ' . $key . ' is mandatory but empty';
                             $this->errors[] = $this->error;
                             $result = -4;
-                        } elseif ($vallabel !== '' && $this->config->getString($uniqueConst)
-                            && $this->idProfExists('code_compta_fournisseur', $vallabel, $s->id ?? 0)) {
-                            $this->error = 'Error '.$key.' already exists';
+                        } elseif (
+                            $vallabel !== '' && $this->config->getString($uniqueConst)
+                            && $this->idProfExists('code_compta_fournisseur', $vallabel, $s->id ?? 0)
+                        ) {
+                            $this->error = 'Error ' . $key . ' already exists';
                             $this->errors[] = $this->error;
                             $result = -4;
                         }
@@ -507,10 +527,10 @@ final class ThirdpartyService
             default => $idprof,
         };
 
-        $sql = "SELECT COUNT(*) as nb FROM llx_societe WHERE ".$this->utils->sanitizeIdentifier($field)." = ".$this->db->quote($value)
-            ." AND entity IN (".$this->config->getEntity('societe').")";
+        $sql = "SELECT COUNT(*) as nb FROM llx_societe WHERE " . $this->utils->sanitizeIdentifier($field) . " = " . $this->db->quote($value)
+            . " AND entity IN (" . $this->config->getEntity('societe') . ")";
         if ($socid) {
-            $sql .= " AND rowid <> ".(int) $socid;
+            $sql .= " AND rowid <> " . (int) $socid;
         }
 
         return (int) $this->db->fetchOne($sql) > 0;
@@ -551,6 +571,10 @@ final class ThirdpartyService
         $this->errors = [];
 
         $s->entity = $this->config->entity();
+        // upstream Societe::create() sets $this->status = 1 before normalizing
+        if ($s->status === null) {
+            $s->status = 1;
+        }
         if (empty($s->status)) {
             $s->status = 0;
         }
@@ -585,7 +609,6 @@ final class ThirdpartyService
         }
 
         $s->date_creation = time();
-        $s->datec = time();
 
         // upstream: get_codeclient()/get_codefournisseur() run when the
         // value is -1 or 'auto' and assign the numbering module's
@@ -671,7 +694,9 @@ final class ThirdpartyService
 
     /**
      * @param int $call_trigger unused (no trigger framework)
-     * @return int <0 KO, >0 OK
+     * Returns <0 KO, >0 OK.
+     *
+     * @return int
      */
     public function update(Company $s, int $id, int $call_trigger = 1, int $allowmodcodeclient = 0, string $action = 'update'): int
     {
@@ -831,111 +856,111 @@ final class ThirdpartyService
         }
 
         $sql = "UPDATE llx_societe SET ";
-        $sql .= "entity = ".((int) $s->entity);
-        $sql .= ",nom = ".$this->db->quote((string) $s->name);
-        $sql .= ",name_alias = ".$this->db->quote((string) ($s->name_alias ?? ''));
-        $sql .= ",ref_ext = ".(!empty($s->ref_ext) ? $this->db->quote((string) $s->ref_ext) : "null");
-        $sql .= ",address = ".$this->db->quote((string) ($s->address ?? ''));
-        $sql .= ",zip = ".(!empty($s->zip) ? $this->db->quote((string) $s->zip) : "null");
-        $sql .= ",town = ".(!empty($s->town) ? $this->db->quote((string) $s->town) : "null");
-        $sql .= ",fk_departement = ".((!empty($s->state_id) && $s->state_id > 0) ? (int) $s->state_id : 'null');
-        $sql .= ",fk_pays = ".((!empty($s->country_id) && $s->country_id > 0) ? (int) $s->country_id : 'null');
-        $sql .= ",phone = ".(!empty($s->phone) ? $this->db->quote((string) $s->phone) : "null");
-        $sql .= ",phone_mobile = ".(!empty($s->phone_mobile) ? $this->db->quote((string) $s->phone_mobile) : "null");
-        $sql .= ",fax = ".(!empty($s->fax) ? $this->db->quote((string) $s->fax) : "null");
-        $sql .= ",email = ".(!empty($s->email) ? $this->db->quote((string) $s->email) : "null");
-        $sql .= ",socialnetworks = ".$this->db->quote(json_encode($s->socialnetworks ?? []));
-        $sql .= ",url = ".(!empty($s->url) ? $this->db->quote((string) $s->url) : "null");
-        $sql .= ",parent = ".(($s->parent ?? 0) > 0 ? (int) $s->parent : "null");
-        $sql .= ",note_private = ".(!empty($s->note_private) ? $this->db->quote((string) $s->note_private) : "null");
-        $sql .= ",note_public = ".(!empty($s->note_public) ? $this->db->quote((string) $s->note_public) : "null");
-        $sql .= ",siren = ".$this->db->quote((string) ($s->idprof1 ?? ''));
-        $sql .= ",siret = ".$this->db->quote((string) ($s->idprof2 ?? ''));
-        $sql .= ",ape = ".$this->db->quote((string) ($s->idprof3 ?? ''));
-        $sql .= ",idprof4 = ".$this->db->quote((string) ($s->idprof4 ?? ''));
-        $sql .= ",idprof5 = ".$this->db->quote((string) ($s->idprof5 ?? ''));
-        $sql .= ",idprof6 = ".$this->db->quote((string) ($s->idprof6 ?? ''));
-        $sql .= ",tva_assuj = ".($s->tva_assuj !== '' ? $this->db->quote((string) $s->tva_assuj) : "null");
-        $sql .= ",tva_intra = ".$this->db->quote((string) ($s->tva_intra ?? ''));
-        $sql .= ",vat_reverse_charge = ".($s->vat_reverse_charge !== '' ? $this->db->quote((string) $s->vat_reverse_charge) : '0');
-        $sql .= ",euid = ".$this->db->quote((string) ($s->euid ?? ''));
-        $sql .= ",status = ".((int) $s->status);
-        $sql .= ",localtax1_assuj = ".($s->localtax1_assuj !== '' && $s->localtax1_assuj !== null ? $this->db->quote((string) $s->localtax1_assuj) : "null");
-        $sql .= ",localtax2_assuj = ".($s->localtax2_assuj !== '' && $s->localtax2_assuj !== null ? $this->db->quote((string) $s->localtax2_assuj) : "null");
+        $sql .= "entity = " . ((int) $s->entity);
+        $sql .= ",nom = " . $this->db->quote((string) $s->name);
+        $sql .= ",name_alias = " . $this->db->quote((string) ($s->name_alias ?? ''));
+        $sql .= ",ref_ext = " . (!empty($s->ref_ext) ? $this->db->quote((string) $s->ref_ext) : "null");
+        $sql .= ",address = " . $this->db->quote((string) ($s->address ?? ''));
+        $sql .= ",zip = " . (!empty($s->zip) ? $this->db->quote((string) $s->zip) : "null");
+        $sql .= ",town = " . (!empty($s->town) ? $this->db->quote((string) $s->town) : "null");
+        $sql .= ",fk_departement = " . ((!empty($s->state_id) && $s->state_id > 0) ? (int) $s->state_id : 'null');
+        $sql .= ",fk_pays = " . ((!empty($s->country_id) && $s->country_id > 0) ? (int) $s->country_id : 'null');
+        $sql .= ",phone = " . (!empty($s->phone) ? $this->db->quote((string) $s->phone) : "null");
+        $sql .= ",phone_mobile = " . (!empty($s->phone_mobile) ? $this->db->quote((string) $s->phone_mobile) : "null");
+        $sql .= ",fax = " . (!empty($s->fax) ? $this->db->quote((string) $s->fax) : "null");
+        $sql .= ",email = " . (!empty($s->email) ? $this->db->quote((string) $s->email) : "null");
+        $sql .= ",socialnetworks = " . $this->db->quote(json_encode($s->socialnetworks ?? []));
+        $sql .= ",url = " . (!empty($s->url) ? $this->db->quote((string) $s->url) : "null");
+        $sql .= ",parent = " . (($s->parent ?? 0) > 0 ? (int) $s->parent : "null");
+        $sql .= ",note_private = " . (!empty($s->note_private) ? $this->db->quote((string) $s->note_private) : "null");
+        $sql .= ",note_public = " . (!empty($s->note_public) ? $this->db->quote((string) $s->note_public) : "null");
+        $sql .= ",siren = " . $this->db->quote((string) ($s->idprof1 ?? ''));
+        $sql .= ",siret = " . $this->db->quote((string) ($s->idprof2 ?? ''));
+        $sql .= ",ape = " . $this->db->quote((string) ($s->idprof3 ?? ''));
+        $sql .= ",idprof4 = " . $this->db->quote((string) ($s->idprof4 ?? ''));
+        $sql .= ",idprof5 = " . $this->db->quote((string) ($s->idprof5 ?? ''));
+        $sql .= ",idprof6 = " . $this->db->quote((string) ($s->idprof6 ?? ''));
+        $sql .= ",tva_assuj = " . ($s->tva_assuj !== '' ? $this->db->quote((string) $s->tva_assuj) : "null");
+        $sql .= ",tva_intra = " . $this->db->quote((string) ($s->tva_intra ?? ''));
+        $sql .= ",vat_reverse_charge = " . ($s->vat_reverse_charge !== '' ? $this->db->quote((string) $s->vat_reverse_charge) : '0');
+        $sql .= ",euid = " . $this->db->quote((string) ($s->euid ?? ''));
+        $sql .= ",status = " . ((int) $s->status);
+        $sql .= ",localtax1_assuj = " . ($s->localtax1_assuj !== '' && $s->localtax1_assuj !== null ? $this->db->quote((string) $s->localtax1_assuj) : "null");
+        $sql .= ",localtax2_assuj = " . ($s->localtax2_assuj !== '' && $s->localtax2_assuj !== null ? $this->db->quote((string) $s->localtax2_assuj) : "null");
         if ($s->localtax1_assuj == 1) {
-            $sql .= ", localtax1_value = ".($s->localtax1_value !== null && $s->localtax1_value !== '' ? (float) $s->localtax1_value : '0.000');
+            $sql .= ", localtax1_value = " . ($s->localtax1_value !== null && $s->localtax1_value !== '' ? (float) $s->localtax1_value : '0.000');
         } else {
             $sql .= ",localtax1_value = 0.000";
         }
         if ($s->localtax2_assuj == 1) {
-            $sql .= ",localtax2_value = ".($s->localtax2_value !== null && $s->localtax2_value !== '' ? (float) $s->localtax2_value : '0.000');
+            $sql .= ",localtax2_value = " . ($s->localtax2_value !== null && $s->localtax2_value !== '' ? (float) $s->localtax2_value : '0.000');
         } else {
             $sql .= ",localtax2_value = 0.000";
         }
-        $sql .= ",capital = ".($s->capital === null ? "null" : (float) $s->capital);
-        $sql .= ",prefix_comm = ".(!empty($s->prefix_comm) ? $this->db->quote((string) $s->prefix_comm) : "null");
-        $sql .= ",fk_effectif = ".(($s->effectif_id ?? 0) > 0 ? (int) $s->effectif_id : "null");
+        $sql .= ",capital = " . ($s->capital === null ? "null" : (float) $s->capital);
+        $sql .= ",prefix_comm = " . (!empty($s->prefix_comm) ? $this->db->quote((string) $s->prefix_comm) : "null");
+        $sql .= ",fk_effectif = " . (($s->effectif_id ?? 0) > 0 ? (int) $s->effectif_id : "null");
 
         if (isset($s->stcomm_id)) {
-            $sql .= ",fk_stcomm=".(int) $s->stcomm_id;
+            $sql .= ",fk_stcomm=" . (int) $s->stcomm_id;
         }
         if (isset($s->typent_id)) {
-            $sql .= ",fk_typent = ".(($s->typent_id ?? 0) > 0 ? (int) $s->typent_id : '0');
+            $sql .= ",fk_typent = " . (($s->typent_id ?? 0) > 0 ? (int) $s->typent_id : '0');
         }
-        $sql .= ",fk_forme_juridique = ".(!empty($s->forme_juridique_code) ? $this->db->quote((string) $s->forme_juridique_code) : "null");
-        $sql .= ",birth = ".($s->birth !== null && $s->birth !== '' && $s->birth !== 0 ? $this->db->quote($this->idate((int) $s->birth, true)) : "null");
-        $sql .= ",datec = ".$this->db->quote($this->idate((int) $s->date_creation));
-        $sql .= ",canvas = ".(!empty($s->canvas) ? $this->db->quote((string) $s->canvas) : "null");
-        $sql .= ",tms = ".$this->db->quote(date('Y-m-d H:i:s'));
-        $sql .= ",client = ".(!empty($s->client) ? (int) $s->client : 0);
-        $sql .= ",fournisseur = ".(!empty($s->fournisseur) ? (int) $s->fournisseur : 0);
-        $sql .= ",barcode = ".(!empty($s->barcode) ? $this->db->quote((string) $s->barcode) : "null");
-        $sql .= ",default_lang = ".(!empty($s->default_lang) ? $this->db->quote((string) $s->default_lang) : "null");
-        $sql .= ",logo = ".(!empty($s->logo) ? $this->db->quote((string) $s->logo) : "null");
-        $sql .= ",logo_squarred = ".(!empty($s->logo_squarred) ? $this->db->quote((string) $s->logo_squarred) : "null");
-        $sql .= ",webservices_url = ".(!empty($s->webservices_url) ? $this->db->quote((string) $s->webservices_url) : "null");
-        $sql .= ",webservices_key = ".(!empty($s->webservices_key) ? $this->db->quote((string) $s->webservices_key) : "null");
-        $sql .= ",accountancy_code_sell = ".$this->db->quote((string) ($s->accountancy_code_sell ?? ''));
-        $sql .= ",accountancy_code_buy = ".$this->db->quote((string) ($s->accountancy_code_buy ?? ''));
+        $sql .= ",fk_forme_juridique = " . (!empty($s->forme_juridique_code) ? $this->db->quote((string) $s->forme_juridique_code) : "null");
+        $sql .= ",birth = " . ($s->birth !== null && $s->birth !== '' && $s->birth !== 0 ? $this->db->quote($this->idate((int) $s->birth, true)) : "null");
+        $sql .= ",datec = " . $this->db->quote($this->idate((int) $s->date_creation));
+        $sql .= ",canvas = " . (!empty($s->canvas) ? $this->db->quote((string) $s->canvas) : "null");
+        $sql .= ",tms = " . $this->db->quote(date('Y-m-d H:i:s'));
+        $sql .= ",client = " . (!empty($s->client) ? (int) $s->client : 0);
+        $sql .= ",fournisseur = " . (!empty($s->fournisseur) ? (int) $s->fournisseur : 0);
+        $sql .= ",barcode = " . (!empty($s->barcode) ? $this->db->quote((string) $s->barcode) : "null");
+        $sql .= ",default_lang = " . (!empty($s->default_lang) ? $this->db->quote((string) $s->default_lang) : "null");
+        $sql .= ",logo = " . (!empty($s->logo) ? $this->db->quote((string) $s->logo) : "null");
+        $sql .= ",logo_squarred = " . (!empty($s->logo_squarred) ? $this->db->quote((string) $s->logo_squarred) : "null");
+        $sql .= ",webservices_url = " . (!empty($s->webservices_url) ? $this->db->quote((string) $s->webservices_url) : "null");
+        $sql .= ",webservices_key = " . (!empty($s->webservices_key) ? $this->db->quote((string) $s->webservices_key) : "null");
+        $sql .= ",accountancy_code_sell = " . $this->db->quote((string) ($s->accountancy_code_sell ?? ''));
+        $sql .= ",accountancy_code_buy = " . $this->db->quote((string) ($s->accountancy_code_buy ?? ''));
         if ($customer) {
-            $sql .= ",accountancy_code_customer_general = ".(!empty($s->accountancy_code_customer_general) ? $this->db->quote((string) $s->accountancy_code_customer_general) : 'null');
-            $sql .= ",code_compta = ".(!empty($s->code_compta_client) ? $this->db->quote((string) $s->code_compta_client) : 'null');
+            $sql .= ",accountancy_code_customer_general = " . (!empty($s->accountancy_code_customer_general) ? $this->db->quote((string) $s->accountancy_code_customer_general) : 'null');
+            $sql .= ",code_compta = " . (!empty($s->code_compta_client) ? $this->db->quote((string) $s->code_compta_client) : 'null');
         }
         if ($supplier) {
-            $sql .= ",accountancy_code_supplier_general = ".(!empty($s->accountancy_code_supplier_general) ? $this->db->quote((string) $s->accountancy_code_supplier_general) : 'null');
-            $sql .= ",code_compta_fournisseur = ".($s->code_compta_fournisseur != '' && $s->code_compta_fournisseur !== null ? $this->db->quote((string) $s->code_compta_fournisseur) : 'null');
+            $sql .= ",accountancy_code_supplier_general = " . (!empty($s->accountancy_code_supplier_general) ? $this->db->quote((string) $s->accountancy_code_supplier_general) : 'null');
+            $sql .= ",code_compta_fournisseur = " . ($s->code_compta_fournisseur != '' && $s->code_compta_fournisseur !== null ? $this->db->quote((string) $s->code_compta_fournisseur) : 'null');
         }
-        $sql .= ",fk_prospectlevel = ".$this->db->quote((string) ($s->fk_prospectlevel ?? ''));
-        $sql .= ",fk_user_modif = ".($this->config->apiUserId() ? (int) $this->config->apiUserId() : 'null');
-        $sql .= ",mode_reglement = ".(!empty($s->mode_reglement_id) ? $this->db->quote((string) $s->mode_reglement_id) : 'null');
-        $sql .= ",cond_reglement = ".(!empty($s->cond_reglement_id) ? $this->db->quote((string) $s->cond_reglement_id) : 'null');
-        $sql .= ",deposit_percent = ".($s->deposit_percent !== null && $s->deposit_percent !== '' ? $this->db->quote((string) $s->deposit_percent) : 'null');
-        $sql .= ",transport_mode = ".(!empty($s->transport_mode_id) ? $this->db->quote((string) $s->transport_mode_id) : 'null');
-        $sql .= ",mode_reglement_supplier = ".(!empty($s->mode_reglement_supplier_id) ? $this->db->quote((string) $s->mode_reglement_supplier_id) : 'null');
-        $sql .= ",cond_reglement_supplier = ".(!empty($s->cond_reglement_supplier_id) ? $this->db->quote((string) $s->cond_reglement_supplier_id) : 'null');
-        $sql .= ",transport_mode_supplier = ".(!empty($s->transport_mode_supplier_id) ? $this->db->quote((string) $s->transport_mode_supplier_id) : 'null');
-        $sql .= ",remise_client = ".($s->remise_percent !== '' && $s->remise_percent !== null ? (float) $s->remise_percent : '0');
-        $sql .= ",remise_supplier = ".(!empty($s->remise_supplier_percent) ? (float) $s->remise_supplier_percent : '0');
-        $sql .= ",outstanding_limit = ".($s->outstanding_limit !== null && $s->outstanding_limit !== '' ? (float) $s->outstanding_limit : 'null');
-        $sql .= ",order_min_amount = ".($s->order_min_amount !== null && $s->order_min_amount !== '' ? (float) $s->order_min_amount : 'null');
-        $sql .= ",supplier_order_min_amount = ".($s->supplier_order_min_amount !== null && $s->supplier_order_min_amount !== '' ? (float) $s->supplier_order_min_amount : 'null');
-        $sql .= ",fk_shipping_method = ".(!empty($s->shipping_method_id) ? (int) $s->shipping_method_id : 'null');
-        $sql .= ",fk_account = ".(!empty($s->fk_account) ? (int) $s->fk_account : 'null');
-        $sql .= ",fk_warehouse = ".(!empty($s->fk_warehouse) ? (int) $s->fk_warehouse : 'null');
-        $sql .= ",price_level = ".(!empty($s->price_level) ? (int) $s->price_level : 'null');
-        $sql .= ",fk_multicurrency = ".((int) ($s->fk_multicurrency ?? 0));
-        $sql .= ",multicurrency_code = ".$this->db->quote((string) ($s->multicurrency_code ?? ''));
-        $sql .= ",model_pdf = ".(!empty($s->model_pdf) ? $this->db->quote((string) $s->model_pdf) : 'null');
-        $sql .= ",import_key = ".(!empty($s->import_key) ? $this->db->quote((string) $s->import_key) : 'null');
+        $sql .= ",fk_prospectlevel = " . $this->db->quote((string) ($s->fk_prospectlevel ?? ''));
+        $sql .= ",fk_user_modif = " . ($this->config->apiUserId() ? (int) $this->config->apiUserId() : 'null');
+        $sql .= ",mode_reglement = " . (!empty($s->mode_reglement_id) ? $this->db->quote((string) $s->mode_reglement_id) : 'null');
+        $sql .= ",cond_reglement = " . (!empty($s->cond_reglement_id) ? $this->db->quote((string) $s->cond_reglement_id) : 'null');
+        $sql .= ",deposit_percent = " . ($s->deposit_percent !== null && $s->deposit_percent !== '' ? $this->db->quote((string) $s->deposit_percent) : 'null');
+        $sql .= ",transport_mode = " . (!empty($s->transport_mode_id) ? $this->db->quote((string) $s->transport_mode_id) : 'null');
+        $sql .= ",mode_reglement_supplier = " . (!empty($s->mode_reglement_supplier_id) ? $this->db->quote((string) $s->mode_reglement_supplier_id) : 'null');
+        $sql .= ",cond_reglement_supplier = " . (!empty($s->cond_reglement_supplier_id) ? $this->db->quote((string) $s->cond_reglement_supplier_id) : 'null');
+        $sql .= ",transport_mode_supplier = " . (!empty($s->transport_mode_supplier_id) ? $this->db->quote((string) $s->transport_mode_supplier_id) : 'null');
+        $sql .= ",remise_client = " . ($s->remise_percent !== '' && $s->remise_percent !== null ? (float) $s->remise_percent : '0');
+        $sql .= ",remise_supplier = " . (!empty($s->remise_supplier_percent) ? (float) $s->remise_supplier_percent : '0');
+        $sql .= ",outstanding_limit = " . ($s->outstanding_limit !== null && $s->outstanding_limit !== '' ? (float) $s->outstanding_limit : 'null');
+        $sql .= ",order_min_amount = " . ($s->order_min_amount !== null && $s->order_min_amount !== '' ? (float) $s->order_min_amount : 'null');
+        $sql .= ",supplier_order_min_amount = " . ($s->supplier_order_min_amount !== null && $s->supplier_order_min_amount !== '' ? (float) $s->supplier_order_min_amount : 'null');
+        $sql .= ",fk_shipping_method = " . (!empty($s->shipping_method_id) ? (int) $s->shipping_method_id : 'null');
+        $sql .= ",fk_account = " . (!empty($s->fk_account) ? (int) $s->fk_account : 'null');
+        $sql .= ",fk_warehouse = " . (!empty($s->fk_warehouse) ? (int) $s->fk_warehouse : 'null');
+        $sql .= ",price_level = " . (!empty($s->price_level) ? (int) $s->price_level : 'null');
+        $sql .= ",fk_multicurrency = " . ((int) ($s->fk_multicurrency ?? 0));
+        $sql .= ",multicurrency_code = " . $this->db->quote((string) ($s->multicurrency_code ?? ''));
+        $sql .= ",model_pdf = " . (!empty($s->model_pdf) ? $this->db->quote((string) $s->model_pdf) : 'null');
+        $sql .= ",import_key = " . (!empty($s->import_key) ? $this->db->quote((string) $s->import_key) : 'null');
 
         if ($customer) {
-            $sql .= ",code_client = ".(!empty($s->code_client) ? $this->db->quote((string) $s->code_client) : "null");
+            $sql .= ",code_client = " . (!empty($s->code_client) ? $this->db->quote((string) $s->code_client) : "null");
         }
         if ($supplier) {
-            $sql .= ",code_fournisseur = ".(!empty($s->code_fournisseur) ? $this->db->quote((string) $s->code_fournisseur) : "null");
+            $sql .= ",code_fournisseur = " . (!empty($s->code_fournisseur) ? $this->db->quote((string) $s->code_fournisseur) : "null");
         }
 
-        $sql .= " WHERE rowid = ".((int) $id);
+        $sql .= " WHERE rowid = " . ((int) $id);
 
         try {
             $this->db->executeStatement($sql);
@@ -999,31 +1024,31 @@ final class ThirdpartyService
         $this->db->beginTransaction();
         try {
             // Categories links removed first
-            $this->db->executeStatement('DELETE FROM llx_categorie_societe WHERE fk_soc = '.(int) $id);
-            $this->db->executeStatement('DELETE FROM llx_categorie_fournisseur WHERE fk_soc = '.(int) $id);
+            $this->db->executeStatement('DELETE FROM llx_categorie_societe WHERE fk_soc = ' . (int) $id);
+            $this->db->executeStatement('DELETE FROM llx_categorie_fournisseur WHERE fk_soc = ' . (int) $id);
 
             // Cascade tables owned by the societe
             foreach (['llx_societe_prices', 'llx_societe_account', 'llx_societe_rib', 'llx_societe_remise', 'llx_societe_remise_except', 'llx_societe_commerciaux'] as $t) {
-                $this->db->executeStatement("DELETE FROM $t WHERE fk_soc = ".(int) $id);
+                $this->db->executeStatement("DELETE FROM $t WHERE fk_soc = " . (int) $id);
             }
             // notifications + categories owned by the thirdparty
-            $this->db->executeStatement('DELETE FROM llx_notify_def WHERE fk_soc = '.(int) $id);
-            $this->db->executeStatement('DELETE FROM llx_categorie WHERE fk_soc = '.(int) $id);
+            $this->db->executeStatement('DELETE FROM llx_notify_def WHERE fk_soc = ' . (int) $id);
+            $this->db->executeStatement('DELETE FROM llx_categorie WHERE fk_soc = ' . (int) $id);
 
             // contacts + their extrafields
-            $contactIds = $this->db->fetchFirstColumn('SELECT rowid FROM llx_socpeople WHERE fk_soc = '.(int) $id);
+            $contactIds = $this->db->fetchFirstColumn('SELECT rowid FROM llx_socpeople WHERE fk_soc = ' . (int) $id);
             foreach ($contactIds as $cid) {
-                $this->db->executeStatement('DELETE FROM llx_socpeople_extrafields WHERE fk_object = '.(int) $cid);
+                $this->db->executeStatement('DELETE FROM llx_socpeople_extrafields WHERE fk_object = ' . (int) $cid);
             }
-            $this->db->executeStatement('DELETE FROM llx_socpeople WHERE fk_soc = '.(int) $id);
+            $this->db->executeStatement('DELETE FROM llx_socpeople WHERE fk_soc = ' . (int) $id);
 
             // extrafields of the thirdparty itself
-            $this->db->executeStatement('DELETE FROM llx_societe_extrafields WHERE fk_object = '.(int) $id);
+            $this->db->executeStatement('DELETE FROM llx_societe_extrafields WHERE fk_object = ' . (int) $id);
 
             // unlink subsidiaries
-            $this->db->executeStatement('UPDATE llx_societe SET parent = NULL WHERE parent = '.(int) $id);
+            $this->db->executeStatement('UPDATE llx_societe SET parent = NULL WHERE parent = ' . (int) $id);
 
-            $this->db->executeStatement('DELETE FROM llx_societe WHERE rowid = '.(int) $id);
+            $this->db->executeStatement('DELETE FROM llx_societe WHERE rowid = ' . (int) $id);
 
             $this->db->commit();
 
@@ -1052,11 +1077,11 @@ final class ThirdpartyService
         ];
         $haschild = 0;
         foreach ($childtables as $table) {
-            $tbl = 'llx_'.$table;
+            $tbl = 'llx_' . $table;
             if (!$this->tableExists($tbl)) {
                 continue;
             }
-            $cnt = (int) $this->db->fetchOne("SELECT COUNT(*) FROM $tbl WHERE fk_soc = ".(int) $id);
+            $cnt = (int) $this->db->fetchOne("SELECT COUNT(*) FROM $tbl WHERE fk_soc = " . (int) $id);
             $haschild += $cnt;
         }
 
@@ -1085,14 +1110,16 @@ final class ThirdpartyService
             $target->client |= $socOrigin->client;
             $target->fournisseur |= $socOrigin->fournisseur;
 
-            foreach ([
+            foreach (
+                [
                 'address', 'zip', 'town', 'state_id', 'country_id', 'phone', 'phone_mobile', 'fax', 'email', 'socialnetworks', 'url', 'barcode',
                 'idprof1', 'idprof2', 'idprof3', 'idprof4', 'idprof5', 'idprof6',
                 'tva_intra', 'euid', 'effectif_id', 'forme_juridique', 'remise_percent', 'remise_supplier_percent', 'mode_reglement_supplier_id', 'cond_reglement_supplier_id', 'name_bis',
                 'stcomm_id', 'outstanding_limit', 'order_min_amount', 'supplier_order_min_amount', 'price_level', 'parent', 'default_lang', 'ref', 'ref_ext', 'import_key', 'fk_incoterms', 'fk_multicurrency',
                 'code_client', 'code_fournisseur', 'code_compta', 'code_compta_fournisseur',
                 'model_pdf', 'webservices_url', 'webservices_key', 'accountancy_code_sell', 'accountancy_code_buy', 'typent_id',
-            ] as $property) {
+                ] as $property
+            ) {
                 if (empty($target->$property)) {
                     $target->$property = $socOrigin->$property;
                 }
@@ -1122,9 +1149,11 @@ final class ThirdpartyService
             $categories->setCategories($suppcats, 'supplier', $target->id);
 
             // Clean codes on origin if duplicated
-            if ($socOrigin->code_client === $target->code_client
+            if (
+                $socOrigin->code_client === $target->code_client
                 || $socOrigin->code_fournisseur === $target->code_fournisseur
-                || $socOrigin->barcode === $target->barcode) {
+                || $socOrigin->barcode === $target->barcode
+            ) {
                 $socOrigin->code_client = '';
                 $socOrigin->code_fournisseur = '';
                 $socOrigin->barcode = '';
@@ -1134,7 +1163,7 @@ final class ThirdpartyService
             // Children companies
             if (!$this->config->getString('SOCIETE_DISABLE_PARENTCOMPANY')) {
                 foreach ($this->getChildrenForCompany((int) $socOrigin->id) as $childId) {
-                    $this->db->executeStatement('UPDATE llx_societe SET parent = '.(int) $target->id.' WHERE rowid = '.(int) $childId);
+                    $this->db->executeStatement('UPDATE llx_societe SET parent = ' . (int) $target->id . ' WHERE rowid = ' . (int) $childId);
                 }
             }
 
@@ -1153,11 +1182,11 @@ final class ThirdpartyService
                     // dedup commerciaux before moving
                     if ($tbl === 'llx_societe_commerciaux') {
                         $this->db->executeStatement(
-                            'DELETE FROM llx_societe_commerciaux WHERE fk_soc = '.(int) $target->id
-                            .' AND fk_user IN (SELECT fk_user FROM (SELECT fk_user FROM llx_societe_commerciaux WHERE fk_soc = '.(int) $socOrigin->id.') t)',
+                            'DELETE FROM llx_societe_commerciaux WHERE fk_soc = ' . (int) $target->id
+                            . ' AND fk_user IN (SELECT fk_user FROM (SELECT fk_user FROM llx_societe_commerciaux WHERE fk_soc = ' . (int) $socOrigin->id . ') t)',
                         );
                     }
-                    $this->db->executeStatement("UPDATE $tbl SET fk_soc = ".(int) $target->id." WHERE fk_soc = ".(int) $socOrigin->id);
+                    $this->db->executeStatement("UPDATE $tbl SET fk_soc = " . (int) $target->id . " WHERE fk_soc = " . (int) $socOrigin->id);
                 }
             }
 
@@ -1194,14 +1223,14 @@ final class ThirdpartyService
     /**
      * Port of getSalesRepresentatives() for mode 0 (list).
      *
-     * @return array<int, array<string, mixed>>
+     * @return array<int, array<string, mixed>>|list<int> rep rows for mode 0, rowid list for mode 1
      */
     public function getSalesRepresentatives(int $socid, int $mode = 0): array
     {
         $sql = 'SELECT u.rowid, u.login, u.lastname, u.firstname, u.office_phone, u.job, u.email, u.statut as status, u.entity, u.photo, u.gender, u.office_fax, u.user_mobile, u.personal_mobile'
-            .' FROM llx_societe_commerciaux sc, llx_user u'
-            .' WHERE u.entity IN (0,'.$this->config->entity().') AND u.rowid = sc.fk_user AND sc.fk_soc = '.(int) $socid
-            .' ORDER BY u.lastname, u.firstname';
+            . ' FROM llx_societe_commerciaux sc, llx_user u'
+            . ' WHERE u.entity IN (0,' . $this->config->entity() . ') AND u.rowid = sc.fk_user AND sc.fk_soc = ' . (int) $socid
+            . ' ORDER BY u.lastname, u.firstname';
 
         $rows = $this->db->fetchAllAssociative($sql);
         if ($mode == 1) {
@@ -1239,8 +1268,8 @@ final class ThirdpartyService
     {
         if (($s->id ?? 0) > 0 && $commid > 0) {
             try {
-                $this->db->executeStatement('DELETE FROM llx_societe_commerciaux WHERE fk_soc = '.(int) $s->id.' AND fk_user = '.(int) $commid);
-                $this->db->executeStatement('INSERT INTO llx_societe_commerciaux (fk_soc, fk_user) VALUES ('.(int) $s->id.', '.(int) $commid.')');
+                $this->db->executeStatement('DELETE FROM llx_societe_commerciaux WHERE fk_soc = ' . (int) $s->id . ' AND fk_user = ' . (int) $commid);
+                $this->db->executeStatement('INSERT INTO llx_societe_commerciaux (fk_soc, fk_user) VALUES (' . (int) $s->id . ', ' . (int) $commid . ')');
 
                 return 1;
             } catch (\Throwable) {
@@ -1258,7 +1287,7 @@ final class ThirdpartyService
     {
         if (($s->id ?? 0) > 0 && $commid > 0) {
             try {
-                $this->db->executeStatement('DELETE FROM llx_societe_commerciaux WHERE fk_soc = '.(int) $s->id.' AND fk_user = '.(int) $commid);
+                $this->db->executeStatement('DELETE FROM llx_societe_commerciaux WHERE fk_soc = ' . (int) $s->id . ' AND fk_user = ' . (int) $commid);
             } catch (\Throwable) {
                 return -1;
             }
@@ -1271,8 +1300,8 @@ final class ThirdpartyService
     public function setPriceLevel(Company $s, int $priceLevel): int
     {
         if ($s->id) {
-            $this->db->executeStatement('UPDATE llx_societe SET price_level = '.(int) $priceLevel.' WHERE rowid = '.(int) $s->id);
-            $this->db->executeStatement('INSERT INTO llx_societe_prices (datec, fk_soc, price_level, fk_user_author) VALUES ('.$this->db->quote(date('Y-m-d H:i:s')).', '.(int) $s->id.', '.(int) $priceLevel.', '.($this->config->apiUserId() ?: 'null').')');
+            $this->db->executeStatement('UPDATE llx_societe SET price_level = ' . (int) $priceLevel . ' WHERE rowid = ' . (int) $s->id);
+            $this->db->executeStatement('INSERT INTO llx_societe_prices (datec, fk_soc, price_level, fk_user_author) VALUES (' . $this->db->quote(date('Y-m-d H:i:s')) . ', ' . (int) $s->id . ', ' . (int) $priceLevel . ', ' . ($this->config->apiUserId() ?: 'null') . ')');
 
             return 1;
         }
@@ -1295,7 +1324,7 @@ final class ThirdpartyService
                 return -1;
             }
         }
-        $this->db->executeStatement('UPDATE llx_societe SET parent = '.(($id ?? 0) > 0 ? (int) $id : 'null').' WHERE rowid = '.(int) $s->id);
+        $this->db->executeStatement('UPDATE llx_societe SET parent = ' . (($id ?? 0) > 0 ? (int) $id : 'null') . ' WHERE rowid = ' . (int) $s->id);
         $s->parent = $id;
 
         return 1;
@@ -1306,7 +1335,7 @@ final class ThirdpartyService
         if ($counter > 100) {
             return -1;
         }
-        $row = $this->db->fetchAssociative('SELECT parent FROM llx_societe WHERE rowid = '.(int) $idparent);
+        $row = $this->db->fetchAssociative('SELECT parent FROM llx_societe WHERE rowid = ' . (int) $idparent);
         if ($row === false) {
             return -1;
         }
@@ -1323,7 +1352,7 @@ final class ThirdpartyService
     /** @return int[] */
     public function getChildrenForCompany(int $companyId): array
     {
-        return array_map('intval', $this->db->fetchFirstColumn('SELECT rowid FROM llx_societe WHERE parent = '.(int) $companyId));
+        return array_map('intval', $this->db->fetchFirstColumn('SELECT rowid FROM llx_societe WHERE parent = ' . (int) $companyId));
     }
 
     /** Port of set_remise_client(): sets the customer discount + history row. */
@@ -1341,9 +1370,9 @@ final class ThirdpartyService
 
         $this->db->beginTransaction();
         try {
-            $this->db->executeStatement('UPDATE llx_societe SET remise_client = '.$this->db->quote((string) $remise).' WHERE rowid = '.(int) $s->id);
+            $this->db->executeStatement('UPDATE llx_societe SET remise_client = ' . $this->db->quote((string) $remise) . ' WHERE rowid = ' . (int) $s->id);
             $this->db->executeStatement('INSERT INTO llx_societe_remise (entity, datec, fk_soc, remise_client, note, fk_user_author) VALUES ('
-                .$this->config->entity().', '.$this->db->quote(date('Y-m-d H:i:s')).', '.(int) $s->id.', '.$this->db->quote((string) $remise).', '.$this->db->quote($note).', '.($this->config->apiUserId() ?: 'null').')');
+                . $this->config->entity() . ', ' . $this->db->quote(date('Y-m-d H:i:s')) . ', ' . (int) $s->id . ', ' . $this->db->quote((string) $remise) . ', ' . $this->db->quote($note) . ', ' . ($this->config->apiUserId() ?: 'null') . ')');
             $this->db->commit();
 
             return 1;
@@ -1373,9 +1402,9 @@ final class ThirdpartyService
 
         $this->db->beginTransaction();
         try {
-            $this->db->executeStatement('UPDATE llx_societe SET remise_supplier = '.(float) $remise.' WHERE rowid = '.(int) $s->id);
+            $this->db->executeStatement('UPDATE llx_societe SET remise_supplier = ' . (float) $remise . ' WHERE rowid = ' . (int) $s->id);
             $this->db->executeStatement('INSERT INTO llx_societe_remise_supplier (entity, datec, fk_soc, remise_supplier, note, fk_user_author) VALUES ('
-                .$this->config->entity().', '.$this->db->quote(date('Y-m-d H:i:s')).', '.(int) $s->id.', '.(float) $remise.', '.$this->db->quote($note).', '.($this->config->apiUserId() ?: 'null').')');
+                . $this->config->entity() . ', ' . $this->db->quote(date('Y-m-d H:i:s')) . ', ' . (int) $s->id . ', ' . (float) $remise . ', ' . $this->db->quote($note) . ', ' . ($this->config->apiUserId() ?: 'null') . ')');
             $this->db->commit();
 
             return 1;
@@ -1427,7 +1456,7 @@ final class ThirdpartyService
 
     public function saveExtrafields(string $tableElement, int $fkObject, array $arrayOptions): void
     {
-        $table = 'llx_'.$tableElement.'_extrafields';
+        $table = 'llx_' . $tableElement . '_extrafields';
         if (!$this->tableExists($table)) {
             return;
         }
@@ -1440,7 +1469,7 @@ final class ThirdpartyService
         }
         $values = array_intersect_key($normalized, array_flip($columns));
 
-        $this->db->executeStatement("DELETE FROM $table WHERE fk_object = ".(int) $fkObject);
+        $this->db->executeStatement("DELETE FROM $table WHERE fk_object = " . (int) $fkObject);
         if ($values !== []) {
             $values['fk_object'] = $fkObject;
             $this->db->insert($table, $values);

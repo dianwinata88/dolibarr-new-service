@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Aux;
 
-use App\SalesRep\SalesRepService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -21,7 +20,6 @@ final class ThirdpartyAccountController extends AbstractController
 {
     public function __construct(
         private readonly SocieteAccountService $accounts,
-        private readonly SalesRepService $societes,
         private readonly DolibarrContext $config,
     ) {
     }
@@ -57,30 +55,9 @@ final class ThirdpartyAccountController extends AbstractController
         return new JsonResponse($return);
     }
 
-    /**
-     * Get a specific third party by account.
-     *
-     * Upstream: GET /thirdparties/accounts/{site}/{key_account}
-     */
-    #[Route('/accounts/{site}/{key_account}', name: 'aux_get_societe_by_account', methods: ['GET'])]
-    public function getSocieteByAccounts(string $site, string $key_account): JsonResponse
-    {
-        $rows = $this->accounts->findBySiteAndKeyAccount($site, $key_account);
-
-        if (count($rows) === 1) {
-            $socid = (int) $rows[0]['fk_soc'];
-            $returnThirdparty = $this->fetchThirdparty($socid);
-            if ($returnThirdparty === null) {
-                throw new ApiErrorException(404, 'Thirdparty not found');
-            }
-        } else {
-            throw new ApiErrorException(404, 'This account have many thirdparties attached or does not exist.');
-        }
-
-        $this->checkAccess($socid);
-
-        return new JsonResponse($returnThirdparty);
-    }
+    // Note: upstream GET /thirdparties/accounts/{site}/{key_account} is served
+    // by App\ThirdParty\ThirdPartyController (it returns the cleaned Societe
+    // object, which outranks this controller in route order).
 
     /**
      * Create and attach a new account to an existing third party.
@@ -302,20 +279,6 @@ final class ThirdpartyAccountController extends AbstractController
         if (!$this->config->checkAccessToThirdparty($socid)) {
             throw new ApiErrorException(403, 'Access not allowed for login ' . $this->config->apiUserLogin());
         }
-    }
-
-    /**
-     * Port of Thirdparties::_fetch() result — the raw llx_societe row plus
-     * 'id' (upstream returns the cleaned Societe object; here the row as-is,
-     * fk_* keys kept verbatim).
-     *
-     * @return array<string, mixed>|null
-     */
-    private function fetchThirdparty(int $socid): ?array
-    {
-        $row = $this->societes->fetchSociete($socid);
-
-        return $row;
     }
 
     /** @return array<string, mixed> */

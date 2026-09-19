@@ -137,7 +137,9 @@ final class ProfidValidator
     /**
      * Port of isValidProfIds(): country-aware professional id check.
      *
-     * @return int <=0 KO, >0 OK
+     * Returns <=0 KO, >0 OK.
+     *
+     * @return int
      */
     public function isValidProfIds(int $idprof, Company $thirdparty, bool $lenghtonly = false): int
     {

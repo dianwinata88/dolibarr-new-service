@@ -37,19 +37,19 @@ final class DiscountService
     public function fetch(int $rowid, ?int $fkCompany = null): ?array
     {
         $sql = 'SELECT sr.rowid, sr.fk_soc, sr.fk_user, sr.discount_type, sr.entity,'
-            .' sr.amount_ht, sr.amount_tva, sr.amount_ttc,'
-            .' sr.tva_tx, sr.vat_src_code,'
-            .' sr.amount_localtax1, sr.amount_localtax2, sr.localtax1_tx, sr.localtax1_type, sr.localtax2_tx, sr.localtax2_type,'
-            .' sr.fk_facture, sr.fk_facture_line, sr.fk_facture_source,'
-            .' sr.fk_invoice_supplier, sr.fk_invoice_supplier_line, sr.fk_invoice_supplier_source,'
-            .' sr.datec, sr.description,'
-            .' sr.multicurrency_code, sr.multicurrency_tx, sr.multicurrency_amount_ht, sr.multicurrency_amount_tva, sr.multicurrency_amount_ttc,'
-            .' NULL as ref_client, NULL as type, NULL as ref_supplier, NULL as type_supplier, NULL as datef'
-            .' FROM llx_societe_remise_except sr'
-            .' WHERE sr.entity IN ('.$this->config->getEntity('invoice').')'
-            .' AND sr.rowid = '.(int) $rowid;
+            . ' sr.amount_ht, sr.amount_tva, sr.amount_ttc,'
+            . ' sr.tva_tx, sr.vat_src_code,'
+            . ' sr.amount_localtax1, sr.amount_localtax2, sr.localtax1_tx, sr.localtax1_type, sr.localtax2_tx, sr.localtax2_type,'
+            . ' sr.fk_facture, sr.fk_facture_line, sr.fk_facture_source,'
+            . ' sr.fk_invoice_supplier, sr.fk_invoice_supplier_line, sr.fk_invoice_supplier_source,'
+            . ' sr.datec, sr.description,'
+            . ' sr.multicurrency_code, sr.multicurrency_tx, sr.multicurrency_amount_ht, sr.multicurrency_amount_tva, sr.multicurrency_amount_ttc,'
+            . ' NULL as ref_client, NULL as type, NULL as ref_supplier, NULL as type_supplier, NULL as datef'
+            . ' FROM llx_societe_remise_except sr'
+            . ' WHERE sr.entity IN (' . $this->config->getEntity('invoice') . ')'
+            . ' AND sr.rowid = ' . (int) $rowid;
         if ($fkCompany !== null && $fkCompany > 0) {
-            $sql .= ' AND sr.fk_soc = '.(int) $fkCompany;
+            $sql .= ' AND sr.fk_soc = ' . (int) $fkCompany;
         }
 
         $row = $this->db->fetchAssociative($sql);
@@ -71,7 +71,9 @@ final class DiscountService
     /**
      * Port of Societe::set_remise_except() → DiscountAbsolute::create().
      *
-     * @return int <0 KO, >0 new rowid
+     * Returns <0 KO, >0 new rowid.
+     *
+     * @return int
      */
     public function setRemiseExcept(Company $company, float $remise, string $desc, string $vatrate = '', int $discountType = 0, string $priceBaseType = 'HT'): int
     {
@@ -132,7 +134,9 @@ final class DiscountService
     /**
      * Port of DiscountAbsolute::create().
      *
-     * @return int >0 rowid, <0 KO
+     * Returns >0 rowid, <0 KO.
+     *
+     * @return int
      */
     public function create(Discount $d): int
     {
@@ -188,7 +192,9 @@ final class DiscountService
      * Port of DiscountAbsolute::delete() — refused when linked to an
      * invoice/line, or when another discount of the same split is used.
      *
-     * @return int >0 OK, <0 KO
+     * Returns >0 OK, <0 KO.
+     *
+     * @return int
      */
     public function delete(int $rowid): int
     {
@@ -198,8 +204,10 @@ final class DiscountService
         }
 
         // Check that the discount is not already used via fk_facture/fk_invoice_supplier
-        if (!empty($row['fk_facture']) || !empty($row['fk_facture_line'])
-            || !empty($row['fk_invoice_supplier']) || !empty($row['fk_invoice_supplier_line'])) {
+        if (
+            !empty($row['fk_facture']) || !empty($row['fk_facture_line'])
+            || !empty($row['fk_invoice_supplier']) || !empty($row['fk_invoice_supplier_line'])
+        ) {
             $this->error = 'ErrorThisPartOrAnotherIsAlreadyUsedSoDiscountSerieCantBeRemoved';
 
             return -2;
@@ -209,8 +217,8 @@ final class DiscountService
         if (!empty($row['fk_facture_source'])) {
             $nb = (int) $this->db->fetchOne(
                 'SELECT COUNT(*) FROM llx_societe_remise_except'
-                .' WHERE fk_facture_source = '.(int) $row['fk_facture_source']
-                .' AND (fk_facture IS NOT NULL OR fk_facture_line IS NOT NULL)',
+                . ' WHERE fk_facture_source = ' . (int) $row['fk_facture_source']
+                . ' AND (fk_facture IS NOT NULL OR fk_facture_line IS NOT NULL)',
             );
             if ($nb > 0) {
                 $this->error = 'ErrorThisPartOrAnotherIsAlreadyUsedSoDiscountSerieCantBeRemoved';
@@ -221,8 +229,8 @@ final class DiscountService
         if (!empty($row['fk_invoice_supplier_source'])) {
             $nb = (int) $this->db->fetchOne(
                 'SELECT COUNT(*) FROM llx_societe_remise_except'
-                .' WHERE fk_invoice_supplier_source = '.(int) $row['fk_invoice_supplier_source']
-                .' AND (fk_invoice_supplier IS NOT NULL OR fk_invoice_supplier_line IS NOT NULL)',
+                . ' WHERE fk_invoice_supplier_source = ' . (int) $row['fk_invoice_supplier_source']
+                . ' AND (fk_invoice_supplier IS NOT NULL OR fk_invoice_supplier_line IS NOT NULL)',
             );
             if ($nb > 0) {
                 $this->error = 'ErrorThisPartOrAnotherIsAlreadyUsedSoDiscountSerieCantBeRemoved';
@@ -232,9 +240,9 @@ final class DiscountService
         }
 
         $this->db->executeStatement(
-            'DELETE FROM llx_societe_remise_except WHERE rowid = '.(int) $rowid
-            .' AND fk_facture IS NULL AND fk_facture_line IS NULL'
-            .' AND fk_invoice_supplier IS NULL AND fk_invoice_supplier_line IS NULL',
+            'DELETE FROM llx_societe_remise_except WHERE rowid = ' . (int) $rowid
+            . ' AND fk_facture IS NULL AND fk_facture_line IS NULL'
+            . ' AND fk_invoice_supplier IS NULL AND fk_invoice_supplier_line IS NULL',
         );
 
         return 1;
@@ -246,23 +254,23 @@ final class DiscountService
     public function getAvailableDiscounts(Company $company, string $filter = '', float $maxvalue = 0, int $discountType = 0, bool $multicurrency = false): float
     {
         $field = $multicurrency ? 'multicurrency_amount_ttc' : 'amount_ttc';
-        $sql = 'SELECT SUM('.$field.') as total'
-            .' FROM llx_societe_remise_except'
-            .' WHERE entity = '.$this->config->entity()
-            .' AND discount_type = '.(int) $discountType;
+        $sql = 'SELECT SUM(' . $field . ') as total'
+            . ' FROM llx_societe_remise_except'
+            . ' WHERE entity = ' . $this->config->entity()
+            . ' AND discount_type = ' . (int) $discountType;
         if ($discountType === 0) {
             $sql .= ' AND (fk_facture IS NULL AND fk_facture_line IS NULL)';
         } else {
             $sql .= ' AND (fk_invoice_supplier IS NULL AND fk_invoice_supplier_line IS NULL)';
         }
         if ($company->id) {
-            $sql .= ' AND fk_soc = '.(int) $company->id;
+            $sql .= ' AND fk_soc = ' . (int) $company->id;
         }
         if ($filter) {
-            $sql .= ' AND ('.$filter.')';
+            $sql .= ' AND (' . $filter . ')';
         }
         if ($maxvalue) {
-            $sql .= ' AND '.$field.' <= '.(float) $maxvalue;
+            $sql .= ' AND ' . $field . ' <= ' . (float) $maxvalue;
         }
 
         return (float) ($this->db->fetchOne($sql) ?? 0);
@@ -276,10 +284,10 @@ final class DiscountService
     public function getMulticurrencyIdAndTx(string $code): array
     {
         $sql = 'SELECT m.rowid, mc.rate, mc.rate_direct FROM llx_multicurrency m'
-            .' LEFT JOIN llx_multicurrency_rate mc ON (m.rowid = mc.fk_multicurrency)'
-            ." WHERE m.code = ".$this->db->quote($code)
-            .' AND m.entity IN ('.$this->config->getEntity('multicurrency').')'
-            .' ORDER BY mc.date_sync DESC LIMIT 1';
+            . ' LEFT JOIN llx_multicurrency_rate mc ON (m.rowid = mc.fk_multicurrency)'
+            . " WHERE m.code = " . $this->db->quote($code)
+            . ' AND m.entity IN (' . $this->config->getEntity('multicurrency') . ')'
+            . ' ORDER BY mc.date_sync DESC LIMIT 1';
 
         try {
             $row = $this->db->fetchAssociative($sql);

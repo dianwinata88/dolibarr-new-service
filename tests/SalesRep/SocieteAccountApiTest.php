@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\SalesRep;
 
+use App\Tests\Support\TestApiKeys;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -39,8 +40,7 @@ final class SocieteAccountApiTest extends WebTestCase
     private static function client(): KernelBrowser
     {
         $client = self::createClient();
-        $keys = explode(',', (string) ($_SERVER['DOLIBARR_API_KEYS'] ?? 'dolibarr-dev-key'));
-        $client->setServerParameter('HTTP_DOLAPIKEY', trim($keys[0]));
+        $client->setServerParameter('HTTP_DOLAPIKEY', TestApiKeys::first());
 
         return $client;
     }
@@ -140,7 +140,8 @@ final class SocieteAccountApiTest extends WebTestCase
         self::assertResponseIsSuccessful();
         $thirdparty = self::json($client);
         self::assertSame($socid, (int) $thirdparty['id']);
-        self::assertSame('LookupCorp', $thirdparty['nom']);
+        // upstream _cleanObjectDatas unsets 'nom' (deprecated alias of 'name')
+        self::assertSame('LookupCorp', $thirdparty['name']);
 
         // no unique match -> 404 verbatim
         $client->request('GET', self::API . '/accounts/stripe/cus_NOPE');

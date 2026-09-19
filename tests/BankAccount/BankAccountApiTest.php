@@ -6,6 +6,7 @@ namespace App\Tests\BankAccount;
 
 use App\Entity\Societe;
 use App\Entity\SocieteRib;
+use App\Tests\Support\TestApiKeys;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\SchemaTool;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -77,7 +78,7 @@ final class BankAccountApiTest extends WebTestCase
 
     private function apiKey(): string
     {
-        return trim(explode(',', (string) ($_SERVER['DOLIBARR_API_KEYS'] ?? 'test-api-key'))[0]);
+        return TestApiKeys::first();
     }
 
     /**
@@ -276,7 +277,7 @@ final class BankAccountApiTest extends WebTestCase
         self::assertResponseStatusCodeSame(403);
         $body = $this->jsonResponse();
         self::assertIsArray($body);
-        self::assertSame('Not allowed due to bad consistency of input data', $body['detail'] ?? null);
+        self::assertSame('Not allowed due to bad consistency of input data', $body['error']['message'] ?? null);
 
         // nonexistent rib -> same 403 (upstream maps fetch-failure to socid 0)
         $this->request('DELETE', "/api/thirdparties/{$socId}/bankaccounts/99999");

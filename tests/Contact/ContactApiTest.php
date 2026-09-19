@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Contact;
 
+use App\Tests\Support\TestApiKeys;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -76,8 +77,7 @@ final class ContactApiTest extends WebTestCase
     private static function client(): \Symfony\Bundle\FrameworkBundle\KernelBrowser
     {
         $client = self::createClient();
-        $keys = explode(',', (string) ($_SERVER['DOLIBARR_API_KEYS'] ?? 'dolibarr-dev-key'));
-        $client->setServerParameter('HTTP_DOLAPIKEY', trim($keys[0]));
+        $client->setServerParameter('HTTP_DOLAPIKEY', TestApiKeys::first());
 
         return $client;
     }

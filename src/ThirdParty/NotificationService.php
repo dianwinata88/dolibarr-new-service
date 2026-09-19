@@ -33,11 +33,11 @@ final class NotificationService
     public function fetch(int $id, ?int $socId = null): ?array
     {
         $sql = 'SELECT rowid, fk_action as event, fk_soc as socid, fk_contact as contact_id, type, datec, tms as datem'
-            .' FROM llx_notify_def'
-            .' WHERE entity IN ('.$this->config->getEntity('notify_def').')'
-            .' AND rowid = '.(int) $id;
+            . ' FROM llx_notify_def'
+            . ' WHERE entity IN (' . $this->config->getEntity('notify_def') . ')'
+            . ' AND rowid = ' . (int) $id;
         if ($socId !== null) {
-            $sql .= ' AND fk_soc = '.(int) $socId;
+            $sql .= ' AND fk_soc = ' . (int) $socId;
         }
 
         $row = $this->db->fetchAssociative($sql);
@@ -49,7 +49,9 @@ final class NotificationService
      * Port of Notify::create(): INSERT (entity, fk_soc, fk_action,
      * fk_contact, type, datec).
      *
-     * @return int >0 rowid, <0 KO
+     * Returns >0 rowid, <0 KO.
+     *
+     * @return int
      */
     public function create(int $socId, int $event, int $contactId, string $type = 'email'): int
     {
@@ -95,14 +97,16 @@ final class NotificationService
     /**
      * Port of Notify::delete().
      *
-     * @return int >0 OK, <0 KO
+     * Returns >0 OK, <0 KO.
+     *
+     * @return int
      */
     public function delete(int $id): int
     {
         try {
             $this->db->executeStatement(
-                'DELETE FROM llx_notify_def WHERE rowid = '.(int) $id
-                .' AND entity IN ('.$this->config->getEntity('notify_def').')',
+                'DELETE FROM llx_notify_def WHERE rowid = ' . (int) $id
+                . ' AND entity IN (' . $this->config->getEntity('notify_def') . ')',
             );
 
             return 1;
@@ -132,7 +136,7 @@ final class NotificationService
     {
         return $this->db->fetchAllAssociative(
             'SELECT rowid as id, fk_action as event, fk_soc as socid, fk_contact as contact_id, type, datec, tms'
-            .' FROM llx_notify_def WHERE fk_soc = '.(int) $socid,
+            . ' FROM llx_notify_def WHERE fk_soc = ' . (int) $socid,
         );
     }
 
@@ -143,9 +147,9 @@ final class NotificationService
     public function exists(int $socId, int $event, int $contactId): bool
     {
         return $this->db->fetchOne(
-            'SELECT rowid FROM llx_notify_def WHERE fk_soc = '.(int) $socId
-            .' AND fk_action = '.(int) $event.' AND fk_contact = '.(int) $contactId
-            .' AND entity IN ('.$this->config->getEntity('notify_def').')',
+            'SELECT rowid FROM llx_notify_def WHERE fk_soc = ' . (int) $socId
+            . ' AND fk_action = ' . (int) $event . ' AND fk_contact = ' . (int) $contactId
+            . ' AND entity IN (' . $this->config->getEntity('notify_def') . ')',
         ) !== false;
     }
 }

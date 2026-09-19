@@ -31,14 +31,14 @@ final class UniversalSearchFilter
             return '';
         }
         if (!preg_match('/^\(.*\)$/', $filter)) {
-            $filter = '('.$filter.')';
+            $filter = '(' . $filter . ')';
         }
 
         $regexstring = '/\(([a-zA-Z0-9_\.]+:[<>!=insotlke]+:[^\(\)]+)\)/i';
         $firstandlastparenthesis = 0;
 
         if (!$this->checkFilters($filter, $errorstr, $firstandlastparenthesis)) {
-            return $noerror ? '1 = 2' : 'Filter syntax error - '.$errorstr;
+            return $noerror ? '1 = 2' : 'Filter syntax error - ' . $errorstr;
         }
 
         // Syntax test: replace every "(field:op:value)" with "()" and drop
@@ -47,16 +47,16 @@ final class UniversalSearchFilter
         $t = str_ireplace(['and', 'or', ' '], '', $t);
 
         if (preg_match('/[^\(\)]/', $t)) {
-            $errorstr = 'Bad syntax of the search string: '.$filter;
+            $errorstr = 'Bad syntax of the search string: ' . $filter;
 
             return $noerror ? '1 = 2' : 'Filter error - Bad syntax of the search string';
         }
 
-        $ret = ($noand ? '' : ' AND ').($nopar ? '' : '(');
+        $ret = ($noand ? '' : ' AND ') . ($nopar ? '' : '(');
         $ret .= (string) preg_replace_callback($regexstring, fn ($m) => $this->criteriaCallback($m), $filter);
         $ret .= ($nopar ? '' : ')');
 
-        $ret = str_replace('__NOW__', "'".$this->db->quote(date('Y-m-d H:i:s'))."'", $ret);
+        $ret = str_replace('__NOW__', "'" . $this->db->quote(date('Y-m-d H:i:s')) . "'", $ret);
         // __USER_ID__ has no user context in the API service: use the
         // configured API user id like upstream would use $user->id.
         $ret = str_replace('__USER_ID__', '0', $ret);
@@ -94,7 +94,7 @@ final class UniversalSearchFilter
             }
 
             if ($counter < 0) {
-                $error = 'Wrong balance of parenthesis in sqlfilters='.$sqlfilters;
+                $error = 'Wrong balance of parenthesis in sqlfilters=' . $sqlfilters;
                 $parenthesislevel = 0;
 
                 return false;
@@ -102,7 +102,7 @@ final class UniversalSearchFilter
         }
 
         if ($counter > 0) {
-            $error = 'Wrong balance of parenthesis in sqlfilters='.$sqlfilters;
+            $error = 'Wrong balance of parenthesis in sqlfilters=' . $sqlfilters;
             $parenthesislevel = 0;
 
             return false;
@@ -165,7 +165,7 @@ final class UniversalSearchFilter
             foreach ($tmpelemarray as $tmpkey => $tmpelem) {
                 $tmpelem = trim($tmpelem);
                 if (preg_match('/^\'(.*)\'$/', $tmpelem, $reg)) {
-                    $tmpelemarray[$tmpkey] = "'".$this->escape($this->sanitizeSql($reg[1]))."'";
+                    $tmpelemarray[$tmpkey] = "'" . $this->escape($this->sanitizeSql($reg[1])) . "'";
                 } elseif (preg_match('/^[0-9]+$/', (string) $tmpelem)) {
                     $tmpelemarray[$tmpkey] = (int) $tmpelem;
                 } elseif (is_numeric((string) $tmpelem)) {
@@ -181,9 +181,9 @@ final class UniversalSearchFilter
             if (preg_match('/^\'([^\']*)\'$/', $tmpescaped, $regbis)) {
                 $tmpescaped = $regbis[1];
             }
-            $tmpescaped = "'".$this->escape($tmpescaped)."'";
+            $tmpescaped = "'" . $this->escape($tmpescaped) . "'";
         } elseif (preg_match('/^\'(.*)\'$/', $tmpescaped, $regbis)) {
-            $tmpescaped = "'".$this->escape($regbis[1])."'";
+            $tmpescaped = "'" . $this->escape($regbis[1]) . "'";
         } else {
             if (strtoupper($tmpescaped) === 'NULL') {
                 $tmpescaped = 'NULL';
@@ -196,7 +196,7 @@ final class UniversalSearchFilter
             }
         }
 
-        return '('.$this->escapeIdentifier($operand).' '.$operator.' '.$tmpescaped.')';
+        return '(' . $this->escapeIdentifier($operand) . ' ' . $operator . ' ' . $tmpescaped . ')';
     }
 
     /** Equivalent of $db->escape() (only escapes quotes for SQL literals). */

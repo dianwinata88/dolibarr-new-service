@@ -26,22 +26,4 @@ final class DolibarrContext
     {
         return (int) (getenv('DOLIBARR_API_USER_ID') ?: '1');
     }
-
-    /**
-     * getDolGlobalInt('PRODUIT_MULTIPRICES_LIMIT') — set to 5 by upstream
-     * when the multiprices feature is enabled.
-     */
-    public function multipricesLimit(): int
-    {
-        return (int) (getenv('DOLIBARR_MULTIPRICES_LIMIT') ?: '5');
-    }
-
-    /**
-     * getDolGlobalString('PRODUIT_MULTIPRICES')
-     * || getDolGlobalString('PRODUIT_CUSTOMER_PRICES_AND_MULTIPRICES').
-     */
-    public function multipricesEnabled(): bool
-    {
-        return (bool) (getenv('DOLIBARR_MULTIPRICES') ?: '1');
-    }
 }

@@ -152,9 +152,9 @@ final class NumberingService
 
         $posindice = strlen($prefix) + 6;
         $sql = "SELECT MAX(CAST(SUBSTRING($field FROM $posindice) AS SIGNED)) as max"
-            ." FROM llx_societe"
-            ." WHERE $field LIKE ".$this->db->quote($prefix."____-%")
-            ." AND entity IN (".$this->config->getEntity('societe').")";
+            . " FROM llx_societe"
+            . " WHERE $field LIKE " . $this->db->quote($prefix . "____-%")
+            . " AND entity IN (" . $this->config->getEntity('societe') . ")";
 
         $max = (int) ($this->db->fetchOne($sql) ?? 0);
 
@@ -166,7 +166,7 @@ final class NumberingService
             $num = sprintf('%05d', $max + 1);
         }
 
-        return $prefix.$yymm.'-'.$num;
+        return $prefix . $yymm . '-' . $num;
     }
 
     private function monkeyVerif(string &$code, Company $company, int $type): int
@@ -222,8 +222,10 @@ final class NumberingService
     {
         $code = strtoupper(trim($code));
 
-        if ($this->config->getString('COMPANY_ELEPHANT_DATE_START_ENABLE')
-            && ($company->date_creation ?? 0) < (int) $this->config->getString('COMPANY_ELEPHANT_DATE_START')) {
+        if (
+            $this->config->getString('COMPANY_ELEPHANT_DATE_START_ENABLE')
+            && ($company->date_creation ?? 0) < (int) $this->config->getString('COMPANY_ELEPHANT_DATE_START')
+        ) {
             return -5;
         }
         if ($code === '' && !$this->config->getString('MAIN_COMPANY_CODE_ALWAYS_REQUIRED')) {
@@ -257,10 +259,10 @@ final class NumberingService
     private function codeIsAvailable(string $code, Company $company, int $type): int
     {
         $field = $type === 1 ? 'code_fournisseur' : 'code_client';
-        $sql = "SELECT rowid FROM llx_societe WHERE $field = ".$this->db->quote($code)
-            ." AND entity IN (".$this->config->getEntity('societe').")";
+        $sql = "SELECT rowid FROM llx_societe WHERE $field = " . $this->db->quote($code)
+            . " AND entity IN (" . $this->config->getEntity('societe') . ")";
         if (($company->id ?? 0) > 0) {
-            $sql .= " AND rowid <> ".(int) $company->id;
+            $sql .= " AND rowid <> " . (int) $company->id;
         }
 
         try {
@@ -348,15 +350,15 @@ final class NumberingService
             $codetouse = (string) preg_replace('/([a-z])/i', '', $codetouse);
         }
         if ($this->config->getString('COMPANY_AQUARIUM_CLEAN_REGEX')) {
-            $codetouse = (string) preg_replace('/'.$this->config->getString('COMPANY_AQUARIUM_CLEAN_REGEX').'/', '\1\2\3', $codetouse);
+            $codetouse = (string) preg_replace('/' . $this->config->getString('COMPANY_AQUARIUM_CLEAN_REGEX') . '/', '\1\2\3', $codetouse);
         }
 
-        $codetouse = $prefix.strtoupper($codetouse);
+        $codetouse = $prefix . strtoupper($codetouse);
 
         $field = $type === 'customer' ? 'code_compta' : 'code_compta_fournisseur';
-        $sql = "SELECT $field FROM llx_societe WHERE $field = ".$this->db->quote($codetouse);
+        $sql = "SELECT $field FROM llx_societe WHERE $field = " . $this->db->quote($codetouse);
         if (!empty($company->id)) {
-            $sql .= " AND rowid <> ".(int) $company->id;
+            $sql .= " AND rowid <> " . (int) $company->id;
         }
 
         try {
@@ -407,10 +409,10 @@ final class NumberingService
         }
         $codetouse = (string) preg_replace('/([^a-z0-9])/i', '', $codetouse);
         if ($this->config->getString('COMPANY_DIGITARIA_CLEAN_REGEX')) {
-            $codetouse = (string) preg_replace('/'.$this->config->getString('COMPANY_DIGITARIA_CLEAN_REGEX').'/', '\1\2\3', $codetouse);
+            $codetouse = (string) preg_replace('/' . $this->config->getString('COMPANY_DIGITARIA_CLEAN_REGEX') . '/', '\1\2\3', $codetouse);
         }
 
-        $code = $prefix.strtoupper(substr($codetouse, 0, $width));
+        $code = $prefix . strtoupper(substr($codetouse, 0, $width));
 
         if ($this->config->getString('COMPANY_DIGITARIA_UNIQUE_CODE', '1')) {
             $disponibility = $this->checkIfAccountancyCodeIsAlreadyUsed($code, $type);
@@ -418,7 +420,7 @@ final class NumberingService
             while ($disponibility != 0 && $i < 1000) {
                 $a = $i <= 9 ? 1 : ($i <= 99 ? 2 : 3);
                 $w = $type === 'supplier' ? $widthSupplier : $widthCustomer;
-                $code = $prefix.strtoupper(substr($codetouse, 0, $w - $a)).$i;
+                $code = $prefix . strtoupper(substr($codetouse, 0, $w - $a)) . $i;
                 $disponibility = $this->checkIfAccountancyCodeIsAlreadyUsed($code, $type);
                 $i++;
             }
@@ -447,8 +449,8 @@ final class NumberingService
     private function checkIfAccountancyCodeIsAlreadyUsed(string $code, string $type): int
     {
         $field = $type === 'supplier' ? 'code_compta_fournisseur' : 'code_compta';
-        $sql = "SELECT $field FROM llx_societe WHERE $field = ".$this->db->quote($code)
-            ." AND entity IN (".$this->config->getEntity('societe').")";
+        $sql = "SELECT $field FROM llx_societe WHERE $field = " . $this->db->quote($code)
+            . " AND entity IN (" . $this->config->getEntity('societe') . ")";
 
         try {
             $rowid = $this->db->fetchOne($sql);
@@ -568,16 +570,16 @@ final class NumberingService
         }
 
         // Forge SQL
-        $sql = 'SELECT MAX(SUBSTRING('.$field.', '.$maskpos.', '.strlen($counter).')) as nummax';
-        $sql .= ' FROM llx_'.$table;
-        $sql .= ' WHERE '.$field." LIKE '".$this->escapeLike($masklike)."'";
-        $sql .= " AND ".$field." NOT LIKE '(PROV%'";
-        $sql .= ' AND entity IN ('.$bentity.')';
+        $sql = 'SELECT MAX(SUBSTRING(' . $field . ', ' . $maskpos . ', ' . strlen($counter) . ')) as nummax';
+        $sql .= ' FROM llx_' . $table;
+        $sql .= ' WHERE ' . $field . " LIKE '" . $this->escapeLike($masklike) . "'";
+        $sql .= " AND " . $field . " NOT LIKE '(PROV%'";
+        $sql .= ' AND entity IN (' . $bentity . ')';
         if ($where) {
             $sql .= $where;
         }
         if (!empty($sqlwhere)) {
-            $sql .= ' AND '.$sqlwhere;
+            $sql .= ' AND ' . $sqlwhere;
         }
 
         $counterval = 0;
@@ -661,7 +663,7 @@ final class NumberingService
     /** 1-based position of the counter inside the mask. */
     private function posIndex(string $mask, string $counter): int
     {
-        $pos = strpos($mask, '{'.$counter);
+        $pos = strpos($mask, '{' . $counter);
         if ($pos === false) {
             return 1;
         }
@@ -716,7 +718,7 @@ final class NumberingService
         // yearoffset: {yyyy+3} style
         if (preg_match('/\{yy?y?y?([\+\-][0-9]+)\}/i', $mask, $m)) {
             $yearoffset = (int) $m[1];
-            $date = strtotime($yearoffset.' years', $date ?: time());
+            $date = strtotime($yearoffset . ' years', $date ?: time());
         } else {
             $date = $date ?: time();
         }
@@ -768,7 +770,7 @@ final class NumberingService
         $prefixMask = substr($mask, 0, strpos($mask, '{0'));
         $prefix = $this->expandMaskStatic($prefixMask, $date ?: time());
 
-        return 'SUBSTRING('.$this->fieldExpr().', 1, '.strlen($prefix).") = '".$this->escape($prefix)."'";
+        return 'SUBSTRING(' . $this->fieldExpr() . ', 1, ' . strlen($prefix) . ") = '" . $this->escape($prefix) . "'";
     }
 
     private function buildSqlWhereForRazFiscal(string $mask, string $maskwithnocode, int $maskpos, int $yearstart, int $month): string
@@ -785,8 +787,8 @@ final class NumberingService
         $y1 = $this->expandMaskStatic($prefixMask, mktime(0, 0, 0, $month, 1, $yearstart));
         $y2 = $this->expandMaskStatic($prefixMask, mktime(0, 0, 0, $month, 1, $yearstart + 1));
 
-        return '(SUBSTRING('.$this->fieldExpr().', 1, '.strlen($y1).") = '".$this->escape($y1)."'"
-            .' OR SUBSTRING('.$this->fieldExpr().', 1, '.strlen($y2).") = '".$this->escape($y2)."')";
+        return '(SUBSTRING(' . $this->fieldExpr() . ', 1, ' . strlen($y1) . ") = '" . $this->escape($y1) . "'"
+            . ' OR SUBSTRING(' . $this->fieldExpr() . ', 1, ' . strlen($y2) . ") = '" . $this->escape($y2) . "')";
     }
 
     /** Field name injected into generated sqlwhere fragments. */
@@ -817,7 +819,7 @@ final class NumberingService
 
         // year offset
         if (preg_match('/\{yy?y?y?([\+\-][0-9]+)\}/i', $out, $m)) {
-            $date = strtotime($m[1].' years', $date) ?: $date;
+            $date = strtotime($m[1] . ' years', $date) ?: $date;
         }
 
         $out = (string) preg_replace('/\{yyyy([\+\-][0-9]+)?\}/i', date('Y', $date), $out);

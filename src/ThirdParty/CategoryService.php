@@ -78,9 +78,9 @@ final class CategoryService
         $fk = self::MAP_CAT_FK[$type] ?? $type;
 
         $sql = "SELECT ct.fk_categorie, c.label, c.rowid"
-            ." FROM llx_categorie_".$this->utils->sanitizeIdentifier($table)." as ct, llx_categorie as c"
-            ." WHERE ct.fk_categorie = c.rowid AND ct.fk_".$this->utils->sanitizeIdentifier($fk)." = ".(int) $id
-            ." AND c.entity IN (".$this->config->getEntity('category').")";
+            . " FROM llx_categorie_" . $this->utils->sanitizeIdentifier($table) . " as ct, llx_categorie as c"
+            . " WHERE ct.fk_categorie = c.rowid AND ct.fk_" . $this->utils->sanitizeIdentifier($fk) . " = " . (int) $id
+            . " AND c.entity IN (" . $this->config->getEntity('category') . ")";
 
         $rows = $this->db->fetchAllAssociative($sql);
         foreach ($rows as $obj) {
@@ -109,7 +109,7 @@ final class CategoryService
         $type = (string) $this->utils->sanitizeVal($type, 'aZ09');
 
         $subType = $type;
-        $subcolName = 'fk_'.$type;
+        $subcolName = 'fk_' . $type;
         if ($type === 'customer') {
             $subType = 'societe';
             $subcolName = 'fk_soc';
@@ -126,11 +126,11 @@ final class CategoryService
 
         $sql = 'SELECT s.rowid';
         $sqlfields = $sql;
-        $sql .= ' FROM llx_categorie as s, llx_categorie_'.$this->utils->sanitizeIdentifier($subType).' as sub';
-        $sql .= ' WHERE s.entity IN ('.$this->config->getEntity('category').')';
-        $sql .= ' AND s.type = '.((int) $idoftype);
+        $sql .= ' FROM llx_categorie as s, llx_categorie_' . $this->utils->sanitizeIdentifier($subType) . ' as sub';
+        $sql .= ' WHERE s.entity IN (' . $this->config->getEntity('category') . ')';
+        $sql .= ' AND s.type = ' . ((int) $idoftype);
         $sql .= ' AND s.rowid = sub.fk_categorie';
-        $sql .= ' AND sub.'.$this->utils->sanitizeIdentifier($subcolName).' = '.(int) $id;
+        $sql .= ' AND sub.' . $this->utils->sanitizeIdentifier($subcolName) . ' = ' . (int) $id;
 
         if ($limit) {
             if ($page < 0) {
@@ -138,7 +138,7 @@ final class CategoryService
             }
             $offset = $limit * $page;
             $sql .= $this->orderBy($sortfield, $sortorder);
-            $sql .= ' LIMIT '.($limit + 1).' OFFSET '.$offset;
+            $sql .= ' LIMIT ' . ($limit + 1) . ' OFFSET ' . $offset;
         } else {
             $sql .= $this->orderBy($sortfield, $sortorder);
         }
@@ -197,11 +197,11 @@ final class CategoryService
             return -2;
         }
 
-        $table = 'llx_categorie_'.(self::MAP_CAT_TABLE[$type] ?? $type);
+        $table = 'llx_categorie_' . (self::MAP_CAT_TABLE[$type] ?? $type);
         $fk = self::MAP_CAT_FK[$type] ?? $type;
 
         try {
-            $this->db->insert($table, ['fk_categorie' => $catId, 'fk_'.$fk => $objId]);
+            $this->db->insert($table, ['fk_categorie' => $catId, 'fk_' . $fk => $objId]);
         } catch (\Throwable $e) {
             if (str_contains($e->getMessage(), 'Duplicate entry') || str_contains($e->getMessage(), '1062')) {
                 $this->lastError = 'DB_ERROR_RECORD_ALREADY_EXISTS';
@@ -227,12 +227,12 @@ final class CategoryService
             $type = 'supplier';
         }
 
-        $table = 'llx_categorie_'.(self::MAP_CAT_TABLE[$type] ?? $type);
+        $table = 'llx_categorie_' . (self::MAP_CAT_TABLE[$type] ?? $type);
         $fk = self::MAP_CAT_FK[$type] ?? $type;
 
         try {
             $this->db->executeStatement(
-                "DELETE FROM $table WHERE fk_categorie = ".(int) $catId." AND fk_".$fk." = ".(int) $objId,
+                "DELETE FROM $table WHERE fk_categorie = " . (int) $catId . " AND fk_" . $fk . " = " . (int) $objId,
             );
         } catch (\Throwable $e) {
             $this->lastError = $e->getMessage();
@@ -318,7 +318,7 @@ final class CategoryService
                 $oldsortorder = 'DESC';
                 $return .= ' DESC';
             } else {
-                $return .= ' '.($oldsortorder ?: 'ASC');
+                $return .= ' ' . ($oldsortorder ?: 'ASC');
             }
             $i++;
         }

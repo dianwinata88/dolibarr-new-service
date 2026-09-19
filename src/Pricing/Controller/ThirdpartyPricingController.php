@@ -25,7 +25,6 @@ use Symfony\Component\Routing\Attribute\Route;
  * Customer pricing & discounts endpoints — port of the pricing-related
  * methods of htdocs/societe/class/api_thirdparties.class.php:
  *
- *   PUT    /api/thirdparties/{id}/setpricelevel/{priceLevel}
  *   GET    /api/thirdparties/{id}/fixedamountdiscounts
  *   POST   /api/thirdparties/{id}/fixedamountdiscounts
  *   POST   /api/thirdparties/{id}/splitdiscount/{discountid}
@@ -53,51 +52,11 @@ final class ThirdpartyPricingController
     }
 
     /**
-     * Port of api_thirdparties::setThirdpartyPriceLevel()
-     * — PUT {id}/setpricelevel/{priceLevel}.
-     */
-    #[Route('/setpricelevel/{priceLevel}', methods: ['PUT'], requirements: ['priceLevel' => '\d+'])]
-    public function setPriceLevel(int $id, int $priceLevel): JsonResponse
-    {
-        if (!$this->context->multipricesEnabled()) {
-            return $this->error(
-                Response::HTTP_NOT_IMPLEMENTED,
-                'Multiprices features activation needed for this request',
-            );
-        }
-
-        $limit = $this->context->multipricesLimit();
-        if ($priceLevel < 1 || $priceLevel > $limit) {
-            return $this->error(Response::HTTP_BAD_REQUEST, 'Price level must be between 1 and ' . $limit);
-        }
-
-        $company = $this->fetchThirdparty($id);
-        if ($company === null) {
-            // Upstream maps fetch()==0 to a 500 "Error fetching" response.
-            return $this->error(Response::HTTP_INTERNAL_SERVER_ERROR, 'Error fetching thirdparty ' . $id);
-        }
-
-        $result = $this->pricing->setPriceLevel($company, $priceLevel, $this->context->userId());
-        if ($result <= 0) {
-            return $this->error(
-                Response::HTTP_INTERNAL_SERVER_ERROR,
-                'Error setting new price level for thirdparty ' . $id,
-            );
-        }
-
-        // Upstream returns the full cleaned thirdparty object; only the
-        // pricing-relevant projection is available from this slice.
-        return new JsonResponse([
-            'id' => $company->getRowid(),
-            'name' => $company->getNom(),
-            'price_level' => $company->getPriceLevel(),
-            'remise_percent' => $this->remiseRepo->latestRemiseClient($id),
-        ]);
-    }
-
-    /**
-     * GET {id}/pricelevels — llx_societe_prices history written by
-     * setPriceLevel(). No upstream REST equivalent (read side of the table).
+     * GET {id}/pricelevels — llx_societe_prices history. No upstream REST
+     * equivalent (read side of the table).
+     *
+     * Upstream PUT {id}/setpricelevel/{priceLevel} is served by
+     * App\ThirdParty\ThirdPartyController (it owns the upstream module gates).
      */
     #[Route('/pricelevels', methods: ['GET'])]
     public function getPriceLevelHistory(int $id): JsonResponse

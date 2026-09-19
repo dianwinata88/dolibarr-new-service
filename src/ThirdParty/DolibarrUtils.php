@@ -237,7 +237,7 @@ final class DolibarrUtils
      */
     public function stringNospecial(string $str, string $newstr = '_'): string
     {
-        $str = preg_replace("/([^\w".$newstr."\(\)\[\]\{\}]+)/i", $newstr, $str);
+        $str = preg_replace("/([^\w" . $newstr . "\(\)\[\]\{\}]+)/i", $newstr, $str);
 
         return str_replace(['  ', ' '], [$newstr, $newstr], $str);
     }
@@ -254,7 +254,7 @@ final class DolibarrUtils
             $sizeleft = (int) round($size / 2);
             $sizeright = $size - $sizeleft;
 
-            return mb_substr($string, 0, $sizeleft, $stringformat).'..'.mb_substr($string, -$sizeright, null, $stringformat);
+            return mb_substr($string, 0, $sizeleft, $stringformat) . '..' . mb_substr($string, -$sizeright, null, $stringformat);
         }
 
         return mb_substr($string, 0, $size, $stringformat);
@@ -288,12 +288,12 @@ final class DolibarrUtils
         $sql = sprintf(
             'SELECT %s as valuetoget FROM %s WHERE %s = %s',
             $this->sanitizeIdentifier($fieldid),
-            'llx_'.$this->sanitizeIdentifier($table),
+            'llx_' . $this->sanitizeIdentifier($table),
             $this->sanitizeIdentifier($fieldkey),
             ($fieldkey === 'id' || $fieldkey === 'rowid') ? (string) (int) $key : $this->db->quote($key),
         );
         if ($entityfilter) {
-            $sql .= ' AND entity IN ('.$this->config->getEntity($table).')';
+            $sql .= ' AND entity IN (' . $this->config->getEntity($table) . ')';
         }
         if ($filters) {
             $sql .= $filters;
@@ -331,7 +331,7 @@ final class DolibarrUtils
         $ivseed = openssl_random_pseudo_bytes($ivlen);
         $newchain = openssl_encrypt($chain, $ciphering, $key, 0, $ivseed);
 
-        return 'dolcrypt:'.$ciphering.':'.$ivseed.':'.$newchain;
+        return 'dolcrypt:' . $ciphering . ':' . $ivseed . ':' . $newchain;
     }
 
     /**
@@ -401,14 +401,14 @@ final class DolibarrUtils
         }
 
         $sql = 'SELECT t.rowid, t.code, t.taux as rate, t.recuperableonly as npr, t.accountancy_code_sell, t.accountancy_code_buy, t.localtax1, t.localtax1_type, t.localtax2, t.localtax2_type'
-            .' FROM llx_c_tva as t, llx_c_country as c'
-            .' WHERE t.fk_pays = c.rowid'
-            ." AND c.code = ".$this->db->quote((string) $countrycode)
-            .' AND t.taux = '.(float) $vatratecleaned
-            .' AND t.active = 1'
-            .' AND t.entity IN ('.$this->config->getEntity('c_tva').')';
+            . ' FROM llx_c_tva as t, llx_c_country as c'
+            . ' WHERE t.fk_pays = c.rowid'
+            . " AND c.code = " . $this->db->quote((string) $countrycode)
+            . ' AND t.taux = ' . (float) $vatratecleaned
+            . ' AND t.active = 1'
+            . ' AND t.entity IN (' . $this->config->getEntity('c_tva') . ')';
         if ($vatratecode !== '') {
-            $sql .= ' AND t.code = '.$this->db->quote($vatratecode);
+            $sql .= ' AND t.code = ' . $this->db->quote($vatratecode);
         }
 
         $row = $this->db->fetchAssociative($sql);

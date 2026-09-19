@@ -138,6 +138,10 @@ class Company
     public $date_modification = null;
     public $tms = null;
     public $date_cloture = null;
+    /** @var float|null absolute discounts available (computed on fetch like upstream) */
+    public $absolute_discount = null;
+    /** @var float|null absolute credit notes available (computed on fetch like upstream) */
+    public $absolute_creditnote = null;
     public $user_creation_id = null;
     public $user_validation_id = null;
     public $user_closing_id = null;

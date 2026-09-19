@@ -29,6 +29,23 @@ curl -H 'DOLAPIKEY: dolibarr-dev-key' http://localhost/api     # Hydra entrypoin
 
 API documentation (Swagger UI / OpenAPI): http://localhost/api/docs
 
+### Seed data
+
+```bash
+docker compose exec -T database mariadb -u root -proot dolibarr_crm < fixtures/seed.sql
+```
+
+Creates an `admin` `llx_user` row plus a demo thirdparty / contact / category /
+bank account / external-site account (idempotent, entity 1).
+
+### Endpoint & schema parity
+
+- `docs/PARITY.md` — endpoint-by-endpoint matrix vs upstream `api_*.class.php`.
+- `scripts/schema_diff.sh --upstream /path/to/dolibarr` — diffs the live
+  schema's columns against upstream `htdocs/install/mysql/tables/llx_*.sql`
+  (requires a Dolibarr checkout; uses the compose `database` service when no
+  local `mariadb` client exists).
+
 ## Authentication
 
 Dolibarr-compatible static API keys (`DolibarrApiAccess` semantics). The key

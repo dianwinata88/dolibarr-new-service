@@ -47,6 +47,12 @@ final class AccessDeniedListener implements EventSubscriberInterface
             return;
         }
 
-        $event->setResponse(ApiError::response(403, 'Forbidden'));
+        // Upstream surfaces the exception message verbatim (RestException(403, $msg)).
+        // AccessDeniedHttpException defaults to an empty message; keep 'Forbidden' for
+        // message-less denials (e.g. security voters) like a bare RestException(403).
+        $message = $exception instanceof AccessDeniedHttpException && $exception->getMessage() !== ''
+            ? $exception->getMessage()
+            : 'Forbidden';
+        $event->setResponse(ApiError::response(403, $message));
     }
 }
