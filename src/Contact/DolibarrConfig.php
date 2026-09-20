@@ -1,0 +1,159 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Contact;
+
+use App\Security\EntityContext;
+
+/**
+ * Env-backed replacement for Dolibarr globals (getDolGlobalString/Int/Bool,
+ * isModEnabled, getEntity, $conf->entity, $user, $mysoc).
+ *
+ * Every Dolibarr constant is read from an env var of the same name, so a
+ * deployment can toggle the same switches upstream exposes in llx_const.
+ * Extra service-specific knobs are documented in src/Contact/README.md.
+ */
+final class DolibarrConfig
+{
+    public function __construct(
+        private readonly ?EntityContext $entityContext = null,
+    ) {
+    }
+
+    /** Elements for which getEntity() prepends the shared entity 0. */
+    private const ADDZERO_ELEMENTS = ['user', 'usergroup', 'cronjob', 'c_email_templates', 'email_template', 'default_values', 'overwrite_trans'];
+
+    public function getString(string $name, string $default = ''): string
+    {
+        $value = $_SERVER[$name] ?? $_ENV[$name] ?? getenv($name);
+        if (!is_scalar($value)) {
+            return $default;
+        }
+
+        return (string) $value;
+    }
+
+    public function getInt(string $name, int $default = 0): int
+    {
+        $value = $this->getString($name);
+
+        return $value === '' ? $default : (int) $value;
+    }
+
+    public function getBool(string $name, bool $default = false): bool
+    {
+        $value = $this->getString($name);
+        if ($value === '') {
+            return $default;
+        }
+
+        return $value !== '0' && $value !== 'false';
+    }
+
+    /**
+     * Dolibarr module emulation. The societe module is always enabled in this
+     * service; other modules are listed in the DOLIBARR_MODULES env var as a
+     * comma separated list (e.g. "product,prelevement,multicurrency").
+     */
+    public function isModEnabled(string $module): bool
+    {
+        if ($module === 'societe') {
+            return true;
+        }
+
+        return in_array($module, array_filter(array_map('trim', explode(',', $this->getString('DOLIBARR_MODULES')))), true);
+    }
+
+    /** Current entity (multientity company id), mirrors $conf->entity. */
+    public function entity(): int
+    {
+        return $this->entityContext?->getClient()?->getEntity() ?? $this->getInt('DOLIBARR_ENTITY', 1);
+    }
+
+    /**
+     * Port of getEntity(): returns the comma separated entity list used inside
+     * "entity IN (...)" predicates.
+     */
+    public function getEntity(string $element, int $shared = 1): string
+    {
+        // France to English element aliases, verbatim from functions.lib.php
+        $element = match ($element) {
+            'projet' => 'project',
+            'contrat' => 'contract',
+            'order_supplier' => 'supplier_order',
+            'invoice_supplier' => 'supplier_invoice',
+            default => $element,
+        };
+
+        $out = '';
+        if (in_array($element, self::ADDZERO_ELEMENTS, true)) {
+            $out .= '0,';
+        }
+        $out .= (string) $this->entity();
+
+        return $out;
+    }
+
+    /** Port of setEntity(): entity to stamp on newly created objects. */
+    public function setEntity(?object $currentObject = null): int
+    {
+        if (is_object($currentObject) && ($currentObject->id ?? 0) > 0 && (int) ($currentObject->entity ?? 0) > 0) {
+            return (int) $currentObject->entity;
+        }
+
+        return $this->entity();
+    }
+
+    /** Id of the technical API user (fk_user_creat / fk_user_author). */
+    public function apiUserId(): int
+    {
+        return $this->getInt('DOLIBARR_API_USER_ID', 0);
+    }
+
+    /** Login used in "Access not allowed for login ..." error messages. */
+    public function apiUserLogin(): string
+    {
+        return $this->getString('DOLIBARR_API_USER_LOGIN', 'api');
+    }
+
+    /**
+     * socid of the API user — non-empty emulates an external user
+     * ($user->socid > 0), which switches _checkAccessToResource and the
+     * contacts index onto the "linked thirdparty only" code paths.
+     */
+    public function apiSocId(): int
+    {
+        return $this->getInt('DOLIBARR_API_SOCID', 0);
+    }
+
+    /**
+     * Port of hasRight() for the rights this API slice checks. Each right
+     * maps to an env var; default matches an internal user with full rights.
+     * hasRight('societe', 'lire'|'creer'|'supprimer') etc.
+     */
+    public function hasRight(string $module, string $permLevel1, string $permLevel2 = ''): bool
+    {
+        $name = 'DOLIBARR_API_RIGHT_' . strtoupper($module)
+            . '_' . strtoupper($permLevel1)
+            . ($permLevel2 !== '' ? '_' . strtoupper($permLevel2) : '');
+
+        return $this->getBool($name, true);
+    }
+
+    /**
+     * Parse MAIN_INFO_SOCIETE_COUNTRY ("rowid:code:label") like upstream
+     * company configuration. Returns [rowid, code, label].
+     *
+     * @return array{0: int, 1: string, 2: string}
+     */
+    public function mysocCountry(): array
+    {
+        $raw = $this->getString('MAIN_INFO_SOCIETE_COUNTRY');
+        if ($raw !== '' && preg_match('/^(\d+):(\w+):(.*)$/', $raw, $m)) {
+            return [(int) $m[1], $m[2], $m[3]];
+        }
+
+        return [$this->getInt('MAIN_INFO_SOCIETE_COUNTRY_ID'), $this->getString('MAIN_INFO_SOCIETE_COUNTRY_CODE'), ''];
+    }
+}

@@ -1,0 +1,91 @@
+services:
+  php:
+    build:
+      context: .
+      target: frankenphp_dev
+    env_file:
+      - .env
+    environment:
+      SERVER_NAME: ${SERVER_NAME:-:80}
+      DATABASE_URL: ${DATABASE_URL:-mysql://dolibarr:dolibarr@database:3306/dolibarr_crm?serverVersion=mariadb-11.4.0&charset=utf8mb4}
+      DOLIBARR_API_KEYS: ${DOLIBARR_API_KEYS:-dolibarr-dev-key}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16}
+      TRUSTED_HOSTS: ${TRUSTED_HOSTS:-^localhost|php$}
+    volumes:
+      - ./:/app
+      - php_vendor:/app/vendor
+      - caddy_data:/data
+      - caddy_config:/config
+    ports:
+      - target: 80
+        published: ${HTTP_PORT:-80}
+        protocol: tcp
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  # Optional database UI: docker compose --profile tools up
+  adminer:
+    image: adminer:latest
+    profiles: ["tools"]
+    environment:
+      ADMINER_DEFAULT_SERVER: database
+    depends_on:
+      database:
+        condition: service_healthy
+    ports:
+      - target: 8080
+        published: ${ADMINER_PORT:-8080}
+        protocol: tcp
+
+  database:
+    image: mariadb:${MARIADB_VERSION:-11.4}
+    environment:
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-dolibarr_crm}
+      MARIADB_USER: ${MARIADB_USER:-dolibarr}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-dolibarr}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-root}
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    volumes:
+      - database_data:/var/lib/mysql:rw
+    ports:
+      - target: 3306
+        published: ${MARIADB_PORT:-3306}
+        protocol: tcp
+
+  hurl:
+    image: ghcr.io/orange-opensource/hurl:latest
+    profiles: ["test"]
+    depends_on:
+      php:
+        condition: service_healthy
+    volumes:
+      - ./tests/hurl:/hurl:ro
+    working_dir: /hurl
+    entrypoint: ["hurl"]
+    command:
+      - "--test"
+      - "--variable"
+      - "host=http://php"
+      # DOLIBARR_API_KEYS is a JSON map; pass a plain key for smoke tests.
+      - "--variable"
+      - "api_key=${DOLIBARR_TEST_API_KEY:-dolibarr-dev-key}"
+      - "--glob"
+      - "*.hurl"
+
+volumes:
+  php_vendor:
+  caddy_data:
+  caddy_config:
+  database_data:
