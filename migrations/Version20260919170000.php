@@ -47,6 +47,6 @@ final class Version20260919170000 extends AbstractMigration
         $this->addSql('DROP TABLE llx_societe_remise_supplier');
         $this->addSql('DROP TABLE llx_multicurrency');
         $this->addSql('DROP TABLE llx_multicurrency_rate');
-        $this->addSql('ALTER TABLE llx_user DROP COLUMN gender, DROP COLUMN job, DROP COLUMN office_phone, DROP COLUMN office_fax, DROP COLUMN user_mobile, DROP COLUMN personal_mobile, DROP COLUMN email, DROP COLUMN photo, DROP COLUMN statut');
+        $this->addSql('ALTER TABLE llx_user DROP COLUMN IF EXISTS gender, DROP COLUMN IF EXISTS job, DROP COLUMN IF EXISTS office_phone, DROP COLUMN IF EXISTS office_fax, DROP COLUMN IF EXISTS user_mobile, DROP COLUMN IF EXISTS personal_mobile, DROP COLUMN IF EXISTS email, DROP COLUMN IF EXISTS photo, DROP COLUMN IF EXISTS statut');
     }
 }

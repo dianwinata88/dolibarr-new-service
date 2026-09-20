@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Aux;
 
+use App\Security\EntityContext;
+
 /**
  * Env-backed replacement for the Dolibarr globals the sales-rep / auxiliary
  * slice relies on: getDolGlobalString/Int/Bool, isModEnabled, getEntity,
@@ -14,6 +16,11 @@ namespace App\Aux;
  */
 final class DolibarrContext
 {
+    public function __construct(
+        private readonly ?EntityContext $entityContext = null,
+    ) {
+    }
+
     /** Elements for which getEntity() prepends the shared entity 0. */
     private const ADDZERO_ELEMENTS = [
         'user', 'usergroup', 'cronjob', 'c_email_templates',
@@ -66,7 +73,7 @@ final class DolibarrContext
     /** Current entity (mirrors $conf->entity). */
     public function entity(): int
     {
-        return $this->getInt('DOLIBARR_ENTITY', 1);
+        return $this->entityContext?->getClient()?->getEntity() ?? $this->getInt('DOLIBARR_ENTITY', 1);
     }
 
     /**

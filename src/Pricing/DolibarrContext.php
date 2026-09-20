@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Pricing;
 
+use App\Security\EntityContext;
+
 /**
  * Values upstream Dolibarr pulls from the global $conf object / API user.
  *
@@ -15,10 +17,15 @@ namespace App\Pricing;
  */
 final class DolibarrContext
 {
+    public function __construct(
+        private readonly ?EntityContext $entityContext = null,
+    ) {
+    }
+
     /** $conf->entity — master entity of a single-entity install. */
     public function entity(): int
     {
-        return (int) (getenv('DOLIBARR_ENTITY') ?: '1');
+        return $this->entityContext?->getClient()?->getEntity() ?? (int) (getenv('DOLIBARR_ENTITY') ?: '1');
     }
 
     /** DolibarrApiAccess::$user->id — id the API key maps to upstream. */

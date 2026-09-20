@@ -169,7 +169,7 @@ final class ThirdPartyController extends AbstractController
                 'pagination' => [
                     'total' => $total,
                     'page' => $page,
-                    'page_count' => (int) ceil($total / $limit),
+                    'page_count' => $limit > 0 ? (int) ceil($total / $limit) : 0,
                     'limit' => $limit,
                 ],
             ];
@@ -189,8 +189,24 @@ final class ThirdPartyController extends AbstractController
         if ($this->thirdpartyService->fetch($c, $id) <= 0) {
             return null;
         }
+        $this->assertAccess($id);
 
         return $c;
+    }
+
+    /**
+     * Port of _checkAccessToResource('societe', id): a restricted API user
+     * (DOLIBARR_API_SOCID set) may only reach the listed companies.
+     */
+    private function assertAccess(int $id): void
+    {
+        $socids = (string) $this->config->getString('DOLIBARR_API_SOCID');
+        if ($socids === '') {
+            return;
+        }
+        if (!in_array($id, array_map('intval', explode(',', $socids)), true)) {
+            throw new ApiErrorException(403, 'Access not allowed for login ' . $this->config->apiUserLogin());
+        }
     }
 
     /** @return JsonResponse */
@@ -200,6 +216,7 @@ final class ThirdPartyController extends AbstractController
         if ($this->thirdpartyService->fetch($c, $rowid, $ref, $refExt, $barcode, '', '', '', '', '', '', $email) <= 0) {
             throw new ApiErrorException(404, 'Thirdparty not found');
         }
+        $this->assertAccess((int) $c->id);
 
         $filterabsolute = $this->config->getString('FACTURE_DEPOSITS_ARE_JUST_PAYMENTS')
             ? 'fk_facture_source IS NULL'

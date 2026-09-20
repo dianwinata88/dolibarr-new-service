@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\BankAccount;
 
 use App\Entity\SocieteRib;
+use App\Security\EntityContext;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
@@ -21,8 +22,6 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  */
 final class CompanyBankAccountManager
 {
-    private const DEFAULT_ENTITY = 1;
-
     /**
      * Object properties upstream update() writes to columns, in SQL order.
      * 'iban' maps to column iban_prefix (encrypted), 'address' to
@@ -39,10 +38,17 @@ final class CompanyBankAccountManager
         private readonly EntityManagerInterface $em,
         private readonly DolCrypt $dolCrypt,
         private readonly RumGenerator $rumGenerator,
+        private readonly EntityContext $entityContext,
         // port of getDolGlobalString('BANKADDON_PDF')
         #[Autowire('%env(default::BANKADDON_PDF)%')]
         private readonly ?string $bankAddonPdf = null,
     ) {
+    }
+
+    /** Entity of the current request — every llx_societe_rib access is scoped to it. */
+    private function entity(): int
+    {
+        return $this->entityContext->getEntity();
     }
 
     /**
@@ -51,14 +57,18 @@ final class CompanyBankAccountManager
     public function listForSociete(int $socId): array
     {
         return $this->em->getRepository(SocieteRib::class)->findBy(
-            ['fk_soc' => $socId, 'entity' => self::DEFAULT_ENTITY],
+            ['fk_soc' => $socId, 'entity' => $this->entity()],
             ['rowid' => 'ASC'],
         );
     }
 
     public function find(int $ribId): ?SocieteRib
     {
-        return $this->em->find(SocieteRib::class, $ribId);
+        // upstream fetch() applies the entity scope — a rib outside the
+        // request's entity is treated as not found
+        return $this->em->getRepository(SocieteRib::class)->findOneBy(
+            ['rowid' => $ribId, 'entity' => $this->entity()],
+        );
     }
 
     /**
@@ -124,7 +134,7 @@ final class CompanyBankAccountManager
             ->andWhere("r.type = 'ban'")
             ->andWhere('r.entity = :entity')
             ->setParameter('soc', $rib->getFkSoc())
-            ->setParameter('entity', self::DEFAULT_ENTITY)
+            ->setParameter('entity', $this->entity())
             ->getQuery()
             ->getSingleScalarResult();
 
@@ -136,7 +146,7 @@ final class CompanyBankAccountManager
             $rib->setDefaultRib(1);
         }
 
-        $rib->setEntity(self::DEFAULT_ENTITY);
+        $rib->setEntity($this->entity());
         if ($rib->getDatec() === null) {
             $rib->setDatec(new \DateTime());
         }

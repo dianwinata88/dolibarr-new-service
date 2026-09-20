@@ -14,6 +14,7 @@ use App\BankAccount\CompanyBankAccountMapper;
 use App\BankAccount\FieldSanitizer;
 use App\Entity\Societe;
 use App\Entity\SocieteRib;
+use App\Security\EntityContext;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -33,14 +34,13 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 final class BankAccountProcessor implements ProcessorInterface
 {
-    private const ENTITY = 1;
-
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly CompanyBankAccountManager $manager,
         private readonly CompanyBankAccountMapper $mapper,
         private readonly FieldSanitizer $sanitizer,
         private readonly RequestStack $requestStack,
+        private readonly EntityContext $entityContext,
     ) {
     }
 
@@ -91,19 +91,23 @@ final class BankAccountProcessor implements ProcessorInterface
         }
         $rib->setDefaultRib((int) ($props['default_rib'] ?? 0));
 
-        // CompanyBankAccount::create()
-        $this->guardWrite(fn () => $this->manager->insertNew($rib), 'Error creating Company Bank account');
+        // One transaction for insert + RUM + update projection: a projection
+        // failure must not leave the minimal row behind.
+        $this->em->wrapInTransaction(function () use ($rib, $company, $props): void {
+            // CompanyBankAccount::create()
+            $this->guardWrite(fn () => $this->manager->insertNew($rib), 'Error creating Company Bank account');
 
-        // auto-generated RUM mandate when the request did not provide one
-        $this->manager->fillRumIfEmpty($rib, $company->getCodeClient(), $props['rum'] ?? null);
+            // auto-generated RUM mandate when the request did not provide one
+            $this->manager->fillRumIfEmpty($rib, $company->getCodeClient(), $props['rum'] ?? null);
 
-        // CompanyBankAccount::update() projection over the request props
-        $bag = array_merge($this->manager->blankProps(), $props);
-        $bag['rum'] = $rib->getRum();
-        $bag['date_rum'] = $rib->getDateRum();
-        $bag['model_pdf'] = $rib->getModelPdf();
-        $bag['default_rib'] = $rib->getDefaultRib();
-        $this->guardWrite(fn () => $this->manager->applyUpdateProjection($rib, $bag), 'Error updating values');
+            // CompanyBankAccount::update() projection over the request props
+            $bag = array_merge($this->manager->blankProps(), $props);
+            $bag['rum'] = $rib->getRum();
+            $bag['date_rum'] = $rib->getDateRum();
+            $bag['model_pdf'] = $rib->getModelPdf();
+            $bag['default_rib'] = $rib->getDefaultRib();
+            $this->guardWrite(fn () => $this->manager->applyUpdateProjection($rib, $bag), 'Error updating values');
+        });
 
         return $this->mapper->toResource($rib, false);
     }
@@ -158,7 +162,7 @@ final class BankAccountProcessor implements ProcessorInterface
 
     private function fetchCompany(int $socId): Societe
     {
-        $company = $this->em->getRepository(Societe::class)->findOneBy(['rowid' => $socId, 'entity' => self::ENTITY]);
+        $company = $this->em->getRepository(Societe::class)->findOneBy(['rowid' => $socId, 'entity' => $this->entityContext->getEntity()]);
         if (!$company instanceof Societe) {
             throw new NotFoundHttpException("Error creating Company Bank account, Company doesn't exists");
         }

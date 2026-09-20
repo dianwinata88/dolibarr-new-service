@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Contact;
 
+use App\Security\EntityContext;
+
 /**
  * Env-backed replacement for Dolibarr globals (getDolGlobalString/Int/Bool,
  * isModEnabled, getEntity, $conf->entity, $user, $mysoc).
@@ -14,6 +16,11 @@ namespace App\Contact;
  */
 final class DolibarrConfig
 {
+    public function __construct(
+        private readonly ?EntityContext $entityContext = null,
+    ) {
+    }
+
     /** Elements for which getEntity() prepends the shared entity 0. */
     private const ADDZERO_ELEMENTS = ['user', 'usergroup', 'cronjob', 'c_email_templates', 'email_template', 'default_values', 'overwrite_trans'];
 
@@ -61,7 +68,7 @@ final class DolibarrConfig
     /** Current entity (multientity company id), mirrors $conf->entity. */
     public function entity(): int
     {
-        return $this->getInt('DOLIBARR_ENTITY', 1);
+        return $this->entityContext?->getClient()?->getEntity() ?? $this->getInt('DOLIBARR_ENTITY', 1);
     }
 
     /**
